@@ -3,6 +3,7 @@
 import sys
 import os
 import webbrowser
+import subprocess
 
 
 ########  DataQC.py ########
@@ -116,7 +117,6 @@ def getdata_QC(runs, datadir=''):
 
 		qcFileString = os.path.dirname(os.path.realpath(__file__)) + "/QCreports/" + r + "_fastqc.html"
 		webbrowser.open("file://" + qcFileString)
-
 
 
 runs=['SRR1298742', 'SRR1298742']

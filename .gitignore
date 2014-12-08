@@ -1,0 +1,6 @@
+#ignore python binary files
+*.pyc
+
+#other
+*.fasta
+.DS_Store

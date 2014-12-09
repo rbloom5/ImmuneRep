@@ -26,6 +26,8 @@ def QCreport(filename):
 	#Generate qc report
 	else:
 		print "Generating QC report..."
+		if not os.path.isdir('./QCreports'):
+			os.system('mkdir ./QCreports')
 		systemString = os.path.dirname(os.path.realpath(__file__)) + "/FastQC/fastqc " + filename + " -outdir=./QCreports"
 		os.system(systemString)
 		webbrowser.open("file://" + qcFileString)
@@ -112,6 +114,8 @@ def getdata_QC(runs, datadir=''):
 
 		#generate qc report
 		print "Generating QC report..."
+		if not os.path.isdir('./QCreports'):
+			os.system('mkdir ./QCreports')
 		systemString = os.path.dirname(os.path.realpath(__file__)) + "/FastQC/fastqc " + fastqfilestring + " -outdir=./QCreports"
 		os.system(systemString)
 
@@ -126,4 +130,4 @@ runs=['SRR1298742', 'SRR1298742']
 # 'SRR1383448','SRR1383447','SRR1383326',
 # 'SRR1383474','SRR1383473','SRR1383472']
 
-# getdata_QC(runs, '~/PythonProjects/Databases/ImmRep/Datasets')
+getdata_QC(runs, '/Users/Robby/Dcouments/Factor14/ImmuneRepertoire/data')

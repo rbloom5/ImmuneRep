@@ -495,7 +495,7 @@ sub makeAccessionsUnique {
 sub scFvAlign {
   my($self,$seqfile,$outfile)=@_;  
   my $cmd = $self->{hmmalign} 
-          . "--amino"  #--allcol
+          . " --amino "  #--allcol
           . $self->{VhVkHMM} 
           . " $seqfile > $outfile";
   `$cmd`;

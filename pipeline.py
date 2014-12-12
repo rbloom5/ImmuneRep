@@ -19,8 +19,8 @@ def pipeline(runs):
 		#Pull in SRA files and convert to .fastq
 		print('Converting '+r+' to fastq format...')
 		datadir = cwd + '/fastq_files'
-		os.system('fastq-dump '+r+ ' --outdir '+datadir)
-		print 'fastq-dump '+ r + ' -outdir '+datadir+' '
+		os.system('fastq-dump '+r+' --outdir '+datadir)
+		#print 'fastq-dump '+r+' -outdir '+datadir+' '
 		print('************************************')
 
 		#Pull in .fastq file and convert to .fasta
@@ -35,4 +35,5 @@ def pipeline(runs):
 		cmd = ['perl', cwd + '/external_lib/vdjfasta/bin/fasta-vdj-pipeline.pl', "--file="+fasta_name, "--verbose=1"]
 		subprocess.call(cmd)
 
-		
+pipeline('SRR735691')
+

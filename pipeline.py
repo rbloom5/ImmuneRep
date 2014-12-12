@@ -6,7 +6,7 @@ from Bio import SeqIO
 cwd = os.getcwd()
 
 #Set directory paths to SRA toolkit (VDJFasta's paths are set in VDJFasta.pm)
-sys.path.append(cwd + "/external_lib/sratoolkit/bin")
+os.system("export PATH=$PATH:"+cwd+"/external_lib/sratoolkit/bin")
 
 def pipeline(runs):
 

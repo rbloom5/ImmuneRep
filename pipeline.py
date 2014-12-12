@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import webbrowser
 from Bio import SeqIO
 
 cwd = os.getcwd()
@@ -30,6 +31,24 @@ def pipeline(runs):
 			os.makedirs(cwd + '/fasta_files')
 		SeqIO.convert(fastq_name, "fastq", fasta_name, "fasta")
 		print('************************************')
+
+		#Run FastQC for quality reporting
+		qcFileString = cwd + "/QCreports/" + r + "_fastqc.html"
+
+		#Check to see if somebody has already done a QC - if so, just display it
+		if os.path.isfile(qcFileString):
+			webbrowser.open("file://" + qcFileString)
+
+		#Generate qc report
+		else:
+			print "Generating QC report..."
+			if not os.path.isdir('./QCreports'):
+				os.system('mkdir ./QCreports')
+			systemString = cwd + "/external_lib/FastQC/fastqc " + fastq_name + " -outdir=./QCreports"
+			os.system(systemString)
+			webbrowser.open("file://" + qcFileString)
+		print('************************************')
+
 		
 		#Run VDJFasta
 		print('Running VDJFasta on '+r+'...')

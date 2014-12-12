@@ -4,5 +4,5 @@
 #other
 *.fasta
 .DS_Store
-.ipynb
+*.ipynb
 0

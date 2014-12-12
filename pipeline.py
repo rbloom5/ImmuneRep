@@ -6,7 +6,6 @@ from Bio import SeqIO
 cwd = os.getcwd()
 
 #Set directory paths to SRA toolkit (VDJFasta's paths are set in VDJFasta.pm)
-os.system("export PATH=$PATH:"+cwd+"/external_lib/sratoolkit/bin")
 
 def pipeline(runs):
 
@@ -19,7 +18,7 @@ def pipeline(runs):
 		#Pull in SRA files and convert to .fastq
 		print('Converting '+r+' to fastq format...')
 		datadir = cwd + '/fastq_files'
-		os.system('fastq-dump '+r+' --outdir '+datadir)
+		os.system(cwd+'/external_lib/sratoolkit/bin/fastq-dump '+r+' --outdir '+datadir)
 		#print 'fastq-dump '+r+' -outdir '+datadir+' '
 		print('************************************')
 

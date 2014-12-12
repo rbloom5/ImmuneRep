@@ -26,9 +26,11 @@ def pipeline(runs):
 		print('Converting '+r+' to fasta formtat...')
 		fastq_name = cwd + '/fastq_files/'+r+'.fastq'
 		fasta_name = cwd + '/fasta_files/'+r+'.fasta'
+		if not os.path.exists(cwd + '/fasta_files'):
+			os.makedirs(cwd + '/fasta_files')
 		SeqIO.convert(fastq_name, "fastq", fasta_name, "fasta")
 		print('************************************')
-
+		
 		#Run VDJFasta
 		print('Running VDJFasta on '+r+'...')
 		cmd = ['perl', cwd + '/external_lib/vdjfasta/bin/fasta-vdj-pipeline.pl', "--file="+fasta_name, "--verbose=1"]

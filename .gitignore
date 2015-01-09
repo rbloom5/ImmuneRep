@@ -6,4 +6,5 @@
 *.fastq
 .DS_Store
 *.ipynb
+*.csv
 0

@@ -3,6 +3,7 @@
 
 #other
 *.fasta
+*.fastq
 .DS_Store
 *.ipynb
 0

@@ -6,7 +6,7 @@ import re
 
 
 class Ab_read:
-	def __init__(self, name = '', V = '', Vmut = '', J='', Jmut='', ABtype = '',cdr3=Seq('')):
+	def __init__(self, name = '', V = '', Vmut = '', J='', Jmut='', ABtype = '',cdr3=Seq(''),cdr2=Seq(''),cdr1=Seq('')):
 		self.name = name
 		self.V = V
 		self.Vmut = Vmut
@@ -14,6 +14,8 @@ class Ab_read:
 		self.Jmut = Jmut
 		self.ABtype = ABtype
 		self.cdr3 = cdr3
+		self.cdr2 = cdr2
+		self.cdr1 = cdr1
 
 
 
@@ -66,25 +68,39 @@ def parse_v_j(filepath, num, select_type): #filepath must be file with extension
 
 				#make protein Seq object from cdr3
 				cdr3 = Seq(line.split(';')[4], generic_protein)
+				cdr2 = Seq(line.split(';')[9], generic_protein)
+				cdr1 = Seq(line.split(';')[8], generic_protein)
 
-				
-				#fill Reads dict with a Rep_read object with above info
-				Reads[name] = Ab_read(name = name, V=V, Vmut=Vmut, J=J, Jmut=Jmut, ABtype = currentABtype, cdr3=cdr3)
-				num_reads += 1
-				if num_reads == num:
-					return Reads
+				#check if all cdrs are present
+				if str(cdr1) and str(cdr2) and str(cdr3):
+				#fill Reads dict with a Ab_read object with above info
+					Reads[name] = Ab_read(name = name, V=V, Vmut=Vmut, J=J, Jmut=Jmut, \
+										ABtype = currentABtype, cdr3=cdr3, cdr2=cdr2, cdr1=cdr1)
+					num_reads += 1
+					if num_reads == num:
+						return Reads
 	return Reads
 
-def load_cdr3s(clones):
-	all_cdr3s=[]
-	cdr3_dict = {}
+def load_cdrs(clones, cdr):
+	all_cdrs=[]
+	cdr_dict = {}
 	for read in clones:
-		if str(clones[read].cdr3):
-			all_cdr3s.append(str(clones[read].cdr3)) ###plug this into cluster_into_clones
-			cdr3_dict[str(clones[read].cdr3)] = read #a dict with cdr3 sequence as key
+		if cdr == 'cdr3':
+			cdr_list = clones[read].cdr3
+		elif cdr == 'cdr2':
+			cdr_list = clones[read].cdr2
+		elif cdr == 'cdr1':
+			cdr_list = clones[read].cdr1
+		else:
+			return "error in cdr input name"
+
+
+		if str(cdr_list):
+			all_cdrs.append(str(cdr_list)) ###plug this into cluster_into_clones
+			cdr_dict[str(cdr_list)] = read #a dict with cdr3 sequence as key
 																		#and ID as value
 
-	return all_cdr3s, cdr3_dict
+	return all_cdrs, cdr_dict
 
 
 

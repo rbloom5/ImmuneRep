@@ -4,6 +4,8 @@ from Bio.Seq import Seq
 from Bio.Alphabet import generic_dna, generic_protein
 import re
 
+import pandas as pd
+
 import scipy as sp
 import scipy.cluster
 import numpy as np
@@ -21,13 +23,17 @@ def hamming_distance(s1, s2):
 
 
 
-def pdist(X,metric):
+def pdist(X,Y,Z,metric):
     m = len(X)
     dm = np.zeros((m * (m - 1) / 2,), dtype=np.double)
     k = 0
     for i in xrange(0, m - 1):
         for j in xrange(i+1, m):
-            dm[k] = metric(X[i], X[j])
+            diff_1 = metric(X[i], X[j])
+            diff_2 = metric(Y[i], Y[j])
+            diff_3 = metric(Z[i], Z[j])
+
+            dm[k] = max([diff_1, diff_2, diff_3]) #metric(X[i], X[j])
             k += 1
             
             # if k/float(5000000) == k/5000000:
@@ -36,23 +42,22 @@ def pdist(X,metric):
 
 
 
-def cluster_into_clones(seqs,cutoff=1.5,linkage='single'):
+
+
+def cluster_into_clones(cdr_1seqs,cdr_2seqs,cdr_3seqs,cutoff=1.5,linkage='single'):
     # check trivial cases
-    if len(seqs) == 0:
+    if len(cdr_3seqs) == 0:
         return np.array([])
         # raise Exception, "chains has nothing it"
     
-    #unique_seqs = list(set(seqs))
-    seq_idxs = dict( [(j,i) for (i,j) in enumerate(seqs)] )
-    
     # check trivial case
-    if len(seqs) == 1:
-        T = np.array([1]*len(seqs))
+    if len(cdr_3seqs) == 1:
+        T = np.array([1]*len(cdr_3seqs))
         return T
     
     # compute the distance matrix
-    Y = pdist(seqs, hamming_distance)
-    
+    #Y = pdist(seqs, hamming_distance)
+    Y = pdist(cdr_1seqs, cdr_2seqs, cdr_3seqs, hamming_distance)
     # compute the linkage
     Z = sp.cluster.hierarchy.linkage(Y,method=linkage)
     
@@ -60,6 +65,8 @@ def cluster_into_clones(seqs,cutoff=1.5,linkage='single'):
     T = sp.cluster.hierarchy.fcluster(Z,cutoff,criterion='distance')
     
     return T
+
+
 
 
 def mostCommon(items):
@@ -81,32 +88,47 @@ def order_clones(All_clones):
 	return sorted_clones
 
 
-def find_clone_props(all_cdr3s, cdr3_dict, T, Vreads, num_Reads, clone_num):
-	ABtype = []
-	percent_reads = ''
-	num_reads = ''
-	final_seq = ''
-	J=''
-	V=''
+def find_clone_props(all_cdr1s, all_cdr2s, all_cdr3s, cdr3_dict, T, Vreads, num_Reads, clone_num):
+    ABtype = []
+    percent_reads = ''
+    num_reads = ''
+    final_seq_1 = ''
+    final_seq_2 = ''
+    final_seq_3 = ''
+    J=''
+    V=''
 
-	read_inds = np.where(T==clone_num)[0] #finds the indices in T which have this clone number
-	num_reads = len(read_inds)
-	percent_reads = num_reads/float(num_Reads)
+    read_inds = np.where(T==clone_num)[0] #finds the indices in T which have this clone number
+    num_reads = len(read_inds)
+    percent_reads = num_reads/float(num_Reads)
 
-	clone_seqs=[]
-	for i in read_inds:
-		clone_seqs.append(all_cdr3s[i])
-	final_seq = mostCommon(clone_seqs) #consensus cdr3 sequence
+    clone_seqs=[]
+    for i in read_inds:
+        clone_seqs.append(all_cdr1s[i])
+    final_seq_1 = mostCommon(clone_seqs) #consensus cdr1 sequence
 
-	#put in J
-	if Vreads[cdr3_dict[final_seq]].J:
-		J = Vreads[cdr3_dict[final_seq]].J[0]
+    clone_seqs=[]
+    for i in read_inds:
+        clone_seqs.append(all_cdr2s[i])
+    final_seq_2 = mostCommon(clone_seqs) #consensus cdr2 sequence
 
-	#put in type
-	if Vreads[cdr3_dict[final_seq]].ABtype:
-		ABtype = Vreads[cdr3_dict[final_seq]].ABtype[0]
+    clone_seqs=[]
+    for i in read_inds:
+        clone_seqs.append(all_cdr3s[i])
+    final_seq_3 = mostCommon(clone_seqs) #consensus cdr3 sequence
 
-	return J, final_seq, num_reads, percent_reads, ABtype
+    #put in J
+    if Vreads[cdr3_dict[final_seq_3]].J:
+        J = Vreads[cdr3_dict[final_seq_3]].J[0]
+
+    #put in type
+    if Vreads[cdr3_dict[final_seq_3]].ABtype:
+        ABtype = Vreads[cdr3_dict[final_seq_3]].ABtype[0]
+
+    return J, final_seq_1, final_seq_2, final_seq_3, num_reads, percent_reads, ABtype
+
+
+
 
 
 

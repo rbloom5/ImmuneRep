@@ -10,31 +10,51 @@ import itertools
 
 import vj_split
 reload(vj_split)
+from vj_split import *
+
 import file_parse
 reload(file_parse)
 from file_parse import *
 
-import Ab_clustering
-reload(Ab_clustering)
-from Ab_clustering import *
+import seq_clustering
+reload(seq_clustering)
+from seq_clustering import *
 
-from vj_split import *
+import blast_clustering
+reload(blast_clustering)
+from blast_clustering import *
+
+
 
 import matplotlib.pyplot as plt
 
 
 
 
+
+
 class Clone:
-    def __init__(self, V = '', J='', cdr3=Seq(''), ABtype = '', num_reads = None, percent_reads = None):
+    def __init__(self, V = '', J='', cdr3=Seq(''), cdr2=Seq(''), cdr1=Seq(''), ABtype = '', num_reads = None, percent_reads = None):
         self.V = V
         self.J = J
         self.cdr3 = cdr3
+        self.cdr2 = cdr2
+        self.cdr1 = cdr1
         self.num_reads = num_reads
         self.percent_reads = percent_reads
         self.ABtype = ABtype
 
-
+class Cluster:
+    def __init__(self, V = '', Js=[], cdr3s=[], cdr2s=[], cdr1s=[], ABtypes = [], num_reads = None, percent_reads = None):
+        self.V = V
+        self.Js = Js
+        self.ABtypes = ABtypes
+        self.cdr3s = cdr3s
+        self.cdr2s = cdr2s
+        self.cdr1s = cdr1s
+        self.num_reads = num_reads
+        self.percent_reads = percent_reads
+        
 
 class Rep_seq:
 
@@ -94,7 +114,9 @@ class Rep_seq:
 			Clones_split_by_V[Vgerm] = {}
 
 			#load in cdr3 sequences from Vgerm
-			all_cdr3s, cdr3_dict = load_cdr3s(self.Reads_split_by_V[Vgerm])
+			all_cdr3s, cdr3_dict = load_cdrs(self.Reads_split_by_V[Vgerm], 'cdr3')
+			all_cdr2s, cdr2_dict = load_cdrs(self.Reads_split_by_V[Vgerm], 'cdr2')
+			all_cdr1s, cdr1_dict = load_cdrs(self.Reads_split_by_V[Vgerm], 'cdr1')
 
 			#if VDJ didn't find the CDR3, skip to next
 			if all_cdr3s == []:
@@ -102,8 +124,8 @@ class Rep_seq:
 				print str(Vgerm_complete) +'/' +str(len(self.Reads_split_by_V)) + " germlines done!"
 				continue
 
-			#cluster by Hamming length = 1
-			T = cluster_into_clones(all_cdr3s)
+			#cluster all cdrs by maximum Hamming length = 1 in each
+			T = cluster_into_clones(all_cdr1s, all_cdr2s, all_cdr3s)
 
 			#list of numbers of clones
 			clones = [x+1 for x in range(np.amax(T))]
@@ -111,7 +133,9 @@ class Rep_seq:
 			#find properties of the clone
 			for clone_num in clones: #clones is list of numbers from T
 
-				J, final_seq, num_reads, percent_reads, ABtype = find_clone_props(all_cdr3s, \
+				J, final_seq_1, final_seq_2, final_seq_3, num_reads, percent_reads, ABtype = find_clone_props(all_cdr1s,\
+																					all_cdr2s,\
+																					all_cdr3s, \
 																					cdr3_dict,\
 																					T, \
 																					self.Reads_split_by_V[Vgerm], \
@@ -120,14 +144,19 @@ class Rep_seq:
 				#plug it all into a clone object
 				All_clones[clone_index] = Clone(V=Vgerm, \
 				                               J=J, \
-				                               cdr3=Seq(final_seq, generic_protein), \
+				                               cdr1 = Seq(final_seq_1, generic_protein), \
+				                               cdr2 = Seq(final_seq_2, generic_protein), \
+				                               cdr3 = Seq(final_seq_3, generic_protein), \
 				                               num_reads=num_reads, \
 				                               percent_reads=percent_reads, \
 				                               ABtype = ABtype)
 
+
 				Clones_split_by_V[Vgerm][clone_num] = Clone(V=Vgerm, \
 				                               			J=J, \
-				                               			cdr3=Seq(final_seq, generic_protein), \
+				                               			cdr1 = Seq(final_seq_1, generic_protein), \
+				                               			cdr2 = Seq(final_seq_2, generic_protein), \
+				                               			cdr3 = Seq(final_seq_3, generic_protein), \
 				                               			num_reads=num_reads, \
 				                               			percent_reads=percent_reads,\
 				                               			ABtype = ABtype)
@@ -149,6 +178,71 @@ class Rep_seq:
 
 
 
+
+	def find_clusters(self):
+		cluster_index = 1
+		Vgerm_complete=0
+		All_clusters = {}
+		read_inds_sum=0
+		for Vgerm in self.Clones_split_by_V:
+
+			all_cdr3s, cdr3_dict = load_cdrs(self.Clones_split_by_V[Vgerm], 'cdr3')
+			all_cdr2s, cdr2_dict = load_cdrs(self.Clones_split_by_V[Vgerm], 'cdr2')
+			all_cdr1s, cdr1_dict = load_cdrs(self.Clones_split_by_V[Vgerm], 'cdr1')
+
+			cdrs=[]
+			for i in range(len(all_cdr3s)):
+				cdrs.append([all_cdr1s[i], all_cdr2s[i], all_cdr3s[i]])
+
+			T = similarity_cluster(cdrs)
+
+
+			clusters = [x+1 for x in range(np.amax(T))]
+
+			#find properties of the clone
+			for cluster_num in clusters: #clones is list of numbers from T
+				read_inds = np.where(T==cluster_num)[0]
+				cluster_cdr1s=[]
+				cluster_cdr2s=[]
+				cluster_cdr3s=[]
+
+				for i in read_inds:
+
+					cluster_cdr1s.append(all_cdr1s[i])
+					cluster_cdr2s.append(all_cdr2s[i])
+					cluster_cdr3s.append(all_cdr3s[i])
+
+				Js, ABtypes, num_reads, percent_reads = find_cluster_props(cluster_cdr3s,\
+																		cdr3_dict,\
+																		self.Clones_split_by_V[Vgerm], \
+																		read_inds)
+
+
+				All_clusters[cluster_index] = Cluster(V=Vgerm, \
+				                               Js=Js, \
+				                               cdr1s = cluster_cdr1s, \
+				                               cdr2s = cluster_cdr2s, \
+				                               cdr3s = cluster_cdr3s, \
+				                               num_reads=num_reads, \
+				                               percent_reads=percent_reads, \
+				                               ABtypes = ABtypes)
+				print str(cluster_index) + " clusters" 
+				cluster_index+=1
+
+			
+			#print progress 
+			Vgerm_complete +=1	
+			print str(Vgerm_complete) +'/' +str(len(self.Reads_split_by_V)) + " germlines done!"
+
+
+		#Order most frequent to least frequent
+		All_clusters_sorted = order_clones(All_clusters)		
+		self.Clusters = All_clusters_sorted
+
+
+
+
+
 	def plot_V_freqs(self, f4=False):
 		if f4:
 			data = self.f4V_freqs
@@ -160,6 +254,8 @@ class Rep_seq:
 		plt.xlabel('V-Germlines')
 		plt.ylabel('Reads')
 		plt.show()
+
+
 
 
 	def plot_V_fractions(self, f4=False):

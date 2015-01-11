@@ -19,7 +19,9 @@ from collections import Counter
 from sklearn.externals import joblib
 from sklearn.ensemble import RandomForestClassifier
 
-
+from Bio.SubsMat import MatrixInfo as matlist
+from Bio import pairwise2
+from Bio.pairwise2 import format_alignment
 
 
 
@@ -60,19 +62,31 @@ def blast_score(query_cdrs, subject_cdrs):
 
 
 
+def Bio_align(query_cdrs, subject_cdrs):
+	outData ={}
+	matrix = matlist.pam30
+	for i in range(3):
+		a = pairwise2.align.globalds(query_cdrs[i], subject_cdrs[i], matrix, -9, -1)[0]
+		outData[i] = np.array([a[2], a[4]-a[3]])
+
+	return np.concatenate((outData[0], outData[1], outData[2]), axis=1)
+
+
+
+
 
 
 def blast_dist(X):
-    blastOptions = "-evalue=200000 -word_size=2 -matrix='PAM30' -comp_based_stats='0' -outfmt=5"
+    rf = joblib.load('/Users/Ryan/SoftwareProjects/ImmuneRep/clustering_model/ABcluster_rf_bio.pkl')
+    scaler = joblib.load('/Users/Ryan/SoftwareProjects/ImmuneRep/clustering_model/scaler.pkl')
     m = len(X)
     dm = np.zeros((m * (m - 1) / 2,), dtype=np.double)
     k = 0
     for i in xrange(0, m - 1):
         for j in xrange(i+1, m):
-            blast_scores = blast_score(X[i], X[j])
-
-            rf = joblib.load('/Users/Ryan/SoftwareProjects/ImmuneRep/clustering_model/ABcluster_rf.pkl')			
-            dm[k] = rf.predict_proba(blast_scores)[0][1] #metric(X[i], X[j])
+            blast_scores = Bio_align(X[i], X[j])
+            blast_scores = scaler.transform(blast_scores)	
+            dm[k] = rf.predict_proba(blast_scores)[0][0] #metric(X[i], X[j])
             k += 1
             
             # if k/float(5000000) == k/5000000:

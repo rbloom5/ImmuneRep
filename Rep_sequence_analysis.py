@@ -197,6 +197,7 @@ class Rep_seq:
 			T = similarity_cluster(cdrs)
 
 
+
 			clusters = [x+1 for x in range(np.amax(T))]
 
 			#find properties of the clone

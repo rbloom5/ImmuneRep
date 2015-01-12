@@ -66,7 +66,7 @@ def Bio_align(query_cdrs, subject_cdrs):
 	outData ={}
 	matrix = matlist.pam30
 	for i in range(3):
-		a = pairwise2.align.globalds(query_cdrs[i], subject_cdrs[i], matrix, -9, -1)[0]
+		a = pairwise2.align.globalds(query_cdrs[i], subject_cdrs[i], matrix, -23, -5)[0]
 		outData[i] = np.array([a[2], a[4]-a[3]])
 
 	return np.concatenate((outData[0], outData[1], outData[2]), axis=1)
@@ -98,7 +98,7 @@ def blast_dist(X):
 
 
 
-def similarity_cluster(cdrs,proba_cutoff=.5,linkage='single'):
+def similarity_cluster(cdrs,proba_cutoff=.5,linkage='average'):
     # check trivial cases
     if len(cdrs) == 0:
         return np.array([])
@@ -111,11 +111,14 @@ def similarity_cluster(cdrs,proba_cutoff=.5,linkage='single'):
     
     # compute the distance matrix
     #Y = pdist(seqs, hamming_distance)
+    print "calculating blast scores..."
     Y = blast_dist(cdrs)
     # compute the linkage
+    print "computing linkages..."
     Z = sp.cluster.hierarchy.linkage(Y,method=linkage)
     
     # determine the clusters at level cutoff
+    print "clustering..."
     T = sp.cluster.hierarchy.fcluster(Z,proba_cutoff,criterion='distance')
     
     return T

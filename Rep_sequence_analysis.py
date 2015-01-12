@@ -34,7 +34,7 @@ import matplotlib.pyplot as plt
 
 
 class Clone:
-    def __init__(self, V = '', J='', cdr3=Seq(''), cdr2=Seq(''), cdr1=Seq(''), ABtype = '', num_reads = None, percent_reads = None):
+    def __init__(self, V = '', J='', cdr3=Seq(''), cdr2=Seq(''), cdr1=Seq(''), ABtype = '', num_reads = None, percent_reads = None, IDs = []):
         self.V = V
         self.J = J
         self.cdr3 = cdr3
@@ -43,9 +43,10 @@ class Clone:
         self.num_reads = num_reads
         self.percent_reads = percent_reads
         self.ABtype = ABtype
+        self.IDs = IDs
 
 class Cluster:
-    def __init__(self, V = '', Js=[], cdr3s=[], cdr2s=[], cdr1s=[], ABtypes = [], num_reads = None, percent_reads = None):
+    def __init__(self, V = '', Js=[], cdr3s=[], cdr2s=[], cdr1s=[], ABtypes = [], num_reads = None, percent_reads = None, IDs = []):
         self.V = V
         self.Js = Js
         self.ABtypes = ABtypes
@@ -54,6 +55,7 @@ class Cluster:
         self.cdr1s = cdr1s
         self.num_reads = num_reads
         self.percent_reads = percent_reads
+        self.IDs = IDs
         
 
 class Rep_seq:
@@ -72,11 +74,13 @@ class Rep_seq:
 		#Reads_split_by_V is a dict of dicts  where all the 
 		#Ab_read objects are grouped by the V germline 
 		#Format:  Reads_split_by_V = {Vgermline :{ID: AB_read object}}
-
+		print "loading sequences..."
 		self.Reads = parse_v_j(filepath, num, ABtype)
 		self.num_Reads = len(self.Reads)
+		print "finding V segments..."
 		self.Reads_split_by_V = v_split(self.Reads)
 
+		print "Calculating V segment usage..."
 		self.V_freqs = {}
 		self.V_fractions = {}
 		for Vgerm in self.Reads_split_by_V:
@@ -117,6 +121,7 @@ class Rep_seq:
 			all_cdr3s, cdr3_dict = load_cdrs(self.Reads_split_by_V[Vgerm], 'cdr3')
 			all_cdr2s, cdr2_dict = load_cdrs(self.Reads_split_by_V[Vgerm], 'cdr2')
 			all_cdr1s, cdr1_dict = load_cdrs(self.Reads_split_by_V[Vgerm], 'cdr1')
+			all_IDs, ID_dict = load_cdrs(self.Reads_split_by_V[Vgerm], 'ID')
 
 			#if VDJ didn't find the CDR3, skip to next
 			if all_cdr3s == []:
@@ -133,14 +138,15 @@ class Rep_seq:
 			#find properties of the clone
 			for clone_num in clones: #clones is list of numbers from T
 
-				J, final_seq_1, final_seq_2, final_seq_3, num_reads, percent_reads, ABtype = find_clone_props(all_cdr1s,\
+				J, final_seq_1, final_seq_2, final_seq_3, num_reads, percent_reads, ABtype, IDs = find_clone_props(all_cdr1s,\
 																					all_cdr2s,\
 																					all_cdr3s, \
 																					cdr3_dict,\
 																					T, \
 																					self.Reads_split_by_V[Vgerm], \
 																					self.num_Reads,\
-																					clone_num)
+																					clone_num,\
+																					all_IDs)
 				#plug it all into a clone object
 				All_clones[clone_index] = Clone(V=Vgerm, \
 				                               J=J, \
@@ -149,7 +155,8 @@ class Rep_seq:
 				                               cdr3 = Seq(final_seq_3, generic_protein), \
 				                               num_reads=num_reads, \
 				                               percent_reads=percent_reads, \
-				                               ABtype = ABtype)
+				                               ABtype = ABtype,\
+				                               IDs = IDs)
 
 
 				Clones_split_by_V[Vgerm][clone_num] = Clone(V=Vgerm, \
@@ -159,7 +166,8 @@ class Rep_seq:
 				                               			cdr3 = Seq(final_seq_3, generic_protein), \
 				                               			num_reads=num_reads, \
 				                               			percent_reads=percent_reads,\
-				                               			ABtype = ABtype)
+				                               			ABtype = ABtype,\
+				                               			IDs = IDs)
 				clone_index+=1
 			
 			#print progress 
@@ -189,6 +197,7 @@ class Rep_seq:
 			all_cdr3s, cdr3_dict = load_cdrs(self.Clones_split_by_V[Vgerm], 'cdr3')
 			all_cdr2s, cdr2_dict = load_cdrs(self.Clones_split_by_V[Vgerm], 'cdr2')
 			all_cdr1s, cdr1_dict = load_cdrs(self.Clones_split_by_V[Vgerm], 'cdr1')
+			all_IDs, ID_dict = load_cdrs(self.Clones_split_by_V[Vgerm], 'IDs')
 
 			cdrs=[]
 			for i in range(len(all_cdr3s)):
@@ -206,12 +215,14 @@ class Rep_seq:
 				cluster_cdr1s=[]
 				cluster_cdr2s=[]
 				cluster_cdr3s=[]
+				cluster_IDs = []
 
 				for i in read_inds:
 
 					cluster_cdr1s.append(all_cdr1s[i])
 					cluster_cdr2s.append(all_cdr2s[i])
 					cluster_cdr3s.append(all_cdr3s[i])
+					cluster_IDs.append(all_IDs[i])
 
 				Js, ABtypes, num_reads, percent_reads = find_cluster_props(cluster_cdr3s,\
 																		cdr3_dict,\
@@ -226,7 +237,8 @@ class Rep_seq:
 				                               cdr3s = cluster_cdr3s, \
 				                               num_reads=num_reads, \
 				                               percent_reads=percent_reads, \
-				                               ABtypes = ABtypes)
+				                               ABtypes = ABtypes,\
+				                               IDs = cluster_IDs)
 				print str(cluster_index) + " clusters" 
 				cluster_index+=1
 

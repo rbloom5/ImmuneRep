@@ -88,7 +88,7 @@ def order_clones(All_clones):
 	return sorted_clones
 
 
-def find_clone_props(all_cdr1s, all_cdr2s, all_cdr3s, cdr3_dict, T, Vreads, num_Reads, clone_num):
+def find_clone_props(all_cdr1s, all_cdr2s, all_cdr3s, cdr3_dict, T, Vreads, num_Reads, clone_num, all_IDs):
     ABtype = []
     percent_reads = 0
     num_reads = 0
@@ -117,6 +117,10 @@ def find_clone_props(all_cdr1s, all_cdr2s, all_cdr3s, cdr3_dict, T, Vreads, num_
         clone_seqs.append(all_cdr3s[i])
     final_seq_3 = mostCommon(clone_seqs) #consensus cdr3 sequence
 
+    ID_seqs = []
+    for i in read_inds:
+        ID_seqs.append(all_IDs[i])
+
     #put in J
     if Vreads[cdr3_dict[final_seq_3]].J:
         J = Vreads[cdr3_dict[final_seq_3]].J[0]
@@ -125,7 +129,7 @@ def find_clone_props(all_cdr1s, all_cdr2s, all_cdr3s, cdr3_dict, T, Vreads, num_
     if Vreads[cdr3_dict[final_seq_3]].ABtype:
         ABtype = Vreads[cdr3_dict[final_seq_3]].ABtype[0]
 
-    return J, final_seq_1, final_seq_2, final_seq_3, num_reads, percent_reads, ABtype
+    return J, final_seq_1, final_seq_2, final_seq_3, num_reads, percent_reads, ABtype, ID_seqs
 
 
 

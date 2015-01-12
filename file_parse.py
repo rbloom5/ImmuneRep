@@ -49,36 +49,38 @@ def parse_v_j(filepath, num, select_type): #filepath must be file with extension
 	num_reads = 0
 	if not isinstance(select_type, list):
 		select_type = [select_type]
-	with open(filepath, "rU") as in_handle:
-		v_j=[]
+	for f in filepath:
+		num_reads = 0
+		with open(f, "rU") as in_handle:
+			v_j=[]
 
-		for line in in_handle:
-			if re.search('^>', line):
-				name = line.split(';')[0].split(' ')[0][1:]
-				currentABtype = parse_germ(line.split(';')[6].split(' '))[0]
+			for line in in_handle:
+				if re.search('^>', line):
+					name = line.split(';')[0].split(' ')[0][1:]
+					currentABtype = parse_germ(line.split(';')[6].split(' '))[0]
 
-				#check type
+					#check type
 
-				if select_type and currentABtype and (currentABtype[0] not in select_type):
-					continue
+					if select_type and currentABtype and (currentABtype[0] not in select_type):
+						continue
 
-				#parse_germ returns the germline and the mismatches between sequencer read and germline
-				V, Vmut = parse_germ(line.split(';')[1].split(' '))
-				J, Jmut = parse_germ(line.split(';')[3].split(' '))
+					#parse_germ returns the germline and the mismatches between sequencer read and germline
+					V, Vmut = parse_germ(line.split(';')[1].split(' '))
+					J, Jmut = parse_germ(line.split(';')[3].split(' '))
 
-				#make protein Seq object from cdr3
-				cdr3 = Seq(line.split(';')[4], generic_protein)
-				cdr2 = Seq(line.split(';')[9], generic_protein)
-				cdr1 = Seq(line.split(';')[8], generic_protein)
+					#make protein Seq object from cdr3
+					cdr3 = Seq(line.split(';')[4], generic_protein)
+					cdr2 = Seq(line.split(';')[9], generic_protein)
+					cdr1 = Seq(line.split(';')[8], generic_protein)
 
-				#check if all cdrs are present
-				if str(cdr1) and str(cdr2) and str(cdr3):
-				#fill Reads dict with a Ab_read object with above info
-					Reads[name] = Ab_read(name = name, V=V, Vmut=Vmut, J=J, Jmut=Jmut, \
-										ABtype = currentABtype, cdr3=cdr3, cdr2=cdr2, cdr1=cdr1)
-					num_reads += 1
-					if num_reads == num:
-						return Reads
+					#check if all cdrs are present
+					if str(cdr1) and str(cdr2) and str(cdr3):
+					#fill Reads dict with a Ab_read object with above info
+						Reads[name] = Ab_read(name = name, V=V, Vmut=Vmut, J=J, Jmut=Jmut, \
+											ABtype = currentABtype, cdr3=cdr3, cdr2=cdr2, cdr1=cdr1)
+						num_reads += 1
+						if num_reads == num:
+							break
 	return Reads
 
 def load_cdrs(clones, cdr):
@@ -91,6 +93,10 @@ def load_cdrs(clones, cdr):
 			cdr_list = clones[read].cdr2
 		elif cdr == 'cdr1':
 			cdr_list = clones[read].cdr1
+		elif cdr == "ID":
+			cdr_list = clones[read].name
+		elif cdr == "IDs":
+			cdr_list = clones[read].IDs
 		else:
 			return "error in cdr input name"
 

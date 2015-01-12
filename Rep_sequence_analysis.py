@@ -34,7 +34,8 @@ import matplotlib.pyplot as plt
 
 
 class Clone:
-    def __init__(self, V = '', J='', cdr3=Seq(''), cdr2=Seq(''), cdr1=Seq(''), ABtype = '', num_reads = None, percent_reads = None, IDs = []):
+    def __init__(self, V = '', J='', cdr3=Seq(''), cdr2=Seq(''), cdr1=Seq(''), \
+    			ABtype = '', num_reads = None, percent_reads = None, IDs = []):
         self.V = V
         self.J = J
         self.cdr3 = cdr3
@@ -46,7 +47,9 @@ class Clone:
         self.IDs = IDs
 
 class Cluster:
-    def __init__(self, V = '', Js=[], cdr3s=[], cdr2s=[], cdr1s=[], ABtypes = [], num_reads = None, percent_reads = None, IDs = []):
+    def __init__(self, V = '', Js=[], cdr3s=[], cdr2s=[], cdr1s=[], \
+    			ABtypes = [], num_reads = None, percent_reads = None, \
+    			IDs = []):
         self.V = V
         self.Js = Js
         self.ABtypes = ABtypes
@@ -74,6 +77,8 @@ class Rep_seq:
 		#Reads_split_by_V is a dict of dicts  where all the 
 		#Ab_read objects are grouped by the V germline 
 		#Format:  Reads_split_by_V = {Vgermline :{ID: AB_read object}}
+
+
 		print "loading sequences..."
 		self.Reads = parse_v_j(filepath, num, ABtype)
 		self.num_Reads = len(self.Reads)
@@ -114,6 +119,7 @@ class Rep_seq:
 		All_clones = {}
 		Clones_split_by_V = {}
 		for Vgerm in self.Reads_split_by_V:
+			print "finding " + Vgerm + " clones from %s reads" % len(self.Reads_split_by_V[Vgerm])
 
 			Clones_split_by_V[Vgerm] = {}
 
@@ -172,7 +178,8 @@ class Rep_seq:
 			
 			#print progress 
 			Vgerm_complete +=1	
-			print str(Vgerm_complete) +'/' +str(len(self.Reads_split_by_V)) + " germlines done!"
+			print "%s unique clones found " % np.amax(T)
+			print str(Vgerm_complete) +'/' +str(len(self.Reads_split_by_V)) + " germlines done!\n"
 
 
 		#Order most frequent to least frequent
@@ -193,6 +200,7 @@ class Rep_seq:
 		All_clusters = {}
 		read_inds_sum=0
 		for Vgerm in self.Clones_split_by_V:
+			print "finding " + Vgerm + " clusters from %s clones" % len(self.Clones_split_by_V[Vgerm])
 
 			all_cdr3s, cdr3_dict = load_cdrs(self.Clones_split_by_V[Vgerm], 'cdr3')
 			all_cdr2s, cdr2_dict = load_cdrs(self.Clones_split_by_V[Vgerm], 'cdr2')
@@ -239,12 +247,13 @@ class Rep_seq:
 				                               percent_reads=percent_reads, \
 				                               ABtypes = ABtypes,\
 				                               IDs = cluster_IDs)
-				print str(cluster_index) + " clusters" 
+
 				cluster_index+=1
 
 			
 			#print progress 
-			Vgerm_complete +=1	
+			Vgerm_complete +=1
+			print "%s clusters found from " % np.amax(T)	
 			print str(Vgerm_complete) +'/' +str(len(self.Reads_split_by_V)) + " germlines done!"
 
 

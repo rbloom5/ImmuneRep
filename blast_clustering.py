@@ -22,6 +22,7 @@ from sklearn.ensemble import RandomForestClassifier
 from Bio.SubsMat import MatrixInfo as matlist
 from Bio import pairwise2
 from Bio.pairwise2 import format_alignment
+import time
 
 
 
@@ -79,16 +80,21 @@ def Bio_align(query_cdrs, subject_cdrs):
 def blast_dist(X):
     rf = joblib.load('/Users/Ryan/SoftwareProjects/ImmuneRep/clustering_model/ABcluster_rf_bio.pkl')
     scaler = joblib.load('/Users/Ryan/SoftwareProjects/ImmuneRep/clustering_model/scaler.pkl')
-    m = len(X)
+    m=len(X)
     dm = np.zeros((m * (m - 1) / 2,), dtype=np.double)
     k = 0
+    tic = time.clock()
     for i in xrange(0, m - 1):
         for j in xrange(i+1, m):
+            
             blast_scores = Bio_align(X[i], X[j])
             blast_scores = scaler.transform(blast_scores)	
             dm[k] = rf.predict_proba(blast_scores)[0][0] #metric(X[i], X[j])
             k += 1
-            
+            if k/50000 == k/float(50000):
+                print "%s out of %s pairwise comparisons down" %(k, dm.shape[0])
+                toc = time.clock()
+                print toc-tic
             # if k/float(5000000) == k/5000000:
             #     print k/float(len(dm))
     return dm

@@ -2,29 +2,39 @@
 
 import re
 
-def write_records(v_j_string,in_file):
+def write_records(v_j_string,in_file, count, maximum):
     outfile = v_j_string + '.fasta'
     with open(in_file, 'r') as f, open(outfile, 'w') as of:
         for line in f:
             if re.search('^>', line):
+                if count >= maximum:
+                    return count
                 write = 0
                 V = line.split(';')[1].split(' ')[0]
                 J = line.split(';')[3].split(' ')[0]
                 new_v_j_string = V + '-' + J
                 if new_v_j_string == v_j_string:
                     write = 1
+                    count+=1
+
             if write:
                 of.write(line)
+
+    return count
             
     
 
 
-def v_j_file_split(filepath): #filepath must be to file with XXX.VDJ.H3.L3.CH1.fa from VDJfasta
+def v_j_file_split(filepath, maximum = 10000): #filepath must be to file with XXX.VDJ.H3.L3.CH1.fa from VDJfasta
     with open(filepath, "rU") as in_handle:
 
         v_j=[]
+        count = 0
         for line in in_handle:
             if re.search('^>', line):
+                count+=1
+                if count > maximum:
+                    break
                 V = line.split(';')[1].split(' ')[0]
                 J = line.split(';')[3].split(' ')[0]
                 v_j_string = V + '-' + J
@@ -34,7 +44,10 @@ def v_j_file_split(filepath): #filepath must be to file with XXX.VDJ.H3.L3.CH1.f
 
                 if v_j_string not in v_j:
                     v_j.append(v_j_string)
-                    write_records(v_j_string, filepath)
+                    count = write_records(v_j_string, filepath, count, maximum)
+            
+
+v_j_file_split('/Users/Ryan/SoftwareProjects/Databases/fastq/QuakeMID_1.VDJ.H3.L3.CH1.fa', 3000)
 
 def v_split(Reads):
     #Rep must be dict of Ab_read objects

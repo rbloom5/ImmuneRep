@@ -49,6 +49,8 @@ def parse_v_j(filepath, num, select_type): #filepath must be file with extension
 	num_reads = 0
 	if not isinstance(select_type, list):
 		select_type = [select_type]
+	if not isinstance(filepath, list):
+		filepath = [filepath]
 	for f in filepath:
 		num_reads = 0
 		with open(f, "rU") as in_handle:

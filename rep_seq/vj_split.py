@@ -47,7 +47,6 @@ def v_j_file_split(filepath, maximum = 10000): #filepath must be to file with XX
                     count = write_records(v_j_string, filepath, count, maximum)
             
 
-v_j_file_split('/Users/Ryan/SoftwareProjects/Databases/fastq/QuakeMID_1.VDJ.H3.L3.CH1.fa', 3000)
 
 def v_split(Reads):
     #Rep must be dict of Ab_read objects

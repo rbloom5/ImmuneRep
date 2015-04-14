@@ -97,6 +97,9 @@ def find_clone_props(all_cdr1s, all_cdr2s, all_cdr3s, cdr3_dict, T, Vreads, num_
     final_seq_3 = ''
     J=''
     V=''
+    Vmut = None
+    Jmut = None
+    sh = None
 
     read_inds = np.where(T==clone_num)[0] #finds the indices in T which have this clone number
     num_reads = len(read_inds)
@@ -129,7 +132,14 @@ def find_clone_props(all_cdr1s, all_cdr2s, all_cdr3s, cdr3_dict, T, Vreads, num_
     if Vreads[cdr3_dict[final_seq_3]].ABtype:
         ABtype = Vreads[cdr3_dict[final_seq_3]].ABtype[0]
 
-    return J, final_seq_1, final_seq_2, final_seq_3, num_reads, percent_reads, ABtype, ID_seqs
+    #put in SH
+    if Vreads[cdr3_dict[final_seq_3]].Vmut and Vreads[cdr3_dict[final_seq_3]].Jmut:
+        Vmut = int(Vreads[cdr3_dict[final_seq_3]].Vmut[0])
+        Jmut = int(Vreads[cdr3_dict[final_seq_3]].Jmut[0])
+        sh = Vmut + Jmut
+
+    return J, final_seq_1, final_seq_2, final_seq_3, num_reads, \
+            percent_reads, ABtype, ID_seqs, Vmut, Jmut, sh
 
 
 

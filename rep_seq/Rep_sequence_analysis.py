@@ -27,6 +27,10 @@ from blast_clustering import *
 
 
 import matplotlib.pyplot as plt
+try:
+	import seaborn as sns
+except:
+	pass
 
 
 
@@ -35,7 +39,8 @@ import matplotlib.pyplot as plt
 
 class Clone:
     def __init__(self, V = '', J='', cdr3=Seq(''), cdr2=Seq(''), cdr1=Seq(''), \
-    			ABtype = '', num_reads = None, percent_reads = None, IDs = []):
+    			ABtype = '', num_reads = None, percent_reads = None, IDs = [],\
+    			Vmut = None, Jmut = None, sh = None):
         self.V = V
         self.J = J
         self.cdr3 = cdr3
@@ -45,6 +50,22 @@ class Clone:
         self.percent_reads = percent_reads
         self.ABtype = ABtype
         self.IDs = IDs
+        self.Vmut = Vmut
+        self.Jmut = Jmut
+        self.sh = sh
+
+	def __str__(self):
+		return u'Clone V={V} J={J}, {num_reads} reads'.format(
+			V=self.V,
+			J=self.J,
+			num_reads=self.num_reads,
+		)
+
+	def __repr__(self):
+		return self.__str__()
+
+
+
 
 class Cluster:
     def __init__(self, V = '', Js=[], cdr3s=[], cdr2s=[], cdr1s=[], \
@@ -59,6 +80,18 @@ class Cluster:
         self.num_reads = num_reads
         self.percent_reads = percent_reads
         self.IDs = IDs
+
+	def __str__(self):
+		return u'Cluster V={V}, {num_reads} total reads'.format(
+		V=self.V,
+		num_reads=self.num_reads,
+	)
+
+	def __repr__(self):
+		return self.__str__()
+ 
+
+
         
 
 class Rep_seq:
@@ -94,6 +127,7 @@ class Rep_seq:
 
 
 	def split_V_4(self):
+		#used to get counts of V segment usage, just using first number (i.e. IVH4 instead of IGH4-32)
 		self.Reads_split_by_f4V = v_first4_split(self.Reads)
 
 		self.f4V_freqs = {}
@@ -144,15 +178,16 @@ class Rep_seq:
 			#find properties of the clone
 			for clone_num in clones: #clones is list of numbers from T
 
-				J, final_seq_1, final_seq_2, final_seq_3, num_reads, percent_reads, ABtype, IDs = find_clone_props(all_cdr1s,\
-																					all_cdr2s,\
-																					all_cdr3s, \
-																					cdr3_dict,\
-																					T, \
-																					self.Reads_split_by_V[Vgerm], \
-																					self.num_Reads,\
-																					clone_num,\
-																					all_IDs)
+				J, final_seq_1, final_seq_2, final_seq_3, \
+				num_reads, percent_reads, ABtype, IDs, Vmut, Jmut, sh = find_clone_props(all_cdr1s,\
+																		all_cdr2s,\
+																		all_cdr3s, \
+																		cdr3_dict,\
+																		T, \
+																		self.Reads_split_by_V[Vgerm], \
+																		self.num_Reads,\
+																		clone_num,\
+																		all_IDs)
 				#plug it all into a clone object
 				All_clones[clone_index] = Clone(V=Vgerm, \
 				                               J=J, \
@@ -162,7 +197,10 @@ class Rep_seq:
 				                               num_reads=num_reads, \
 				                               percent_reads=percent_reads, \
 				                               ABtype = ABtype,\
-				                               IDs = IDs)
+				                               IDs = IDs,\
+				                               Vmut = Vmut,\
+				                               Jmut = Jmut,\
+				                               sh = sh)
 
 
 				Clones_split_by_V[Vgerm][clone_num] = Clone(V=Vgerm, \
@@ -173,7 +211,10 @@ class Rep_seq:
 				                               			num_reads=num_reads, \
 				                               			percent_reads=percent_reads,\
 				                               			ABtype = ABtype,\
-				                               			IDs = IDs)
+				                               			IDs = IDs,\
+				                               			Vmut = Vmut,\
+				                               			Jmut = Jmut,\
+				                               			sh = sh)
 				clone_index+=1
 			
 			#print progress 
@@ -190,6 +231,7 @@ class Rep_seq:
 		
 		self.Clones = All_clones_sorted
 		self.Clones_split_by_V = Clones_split_by_V_sorted
+		self.num_clones = len(All_clones_sorted)
 
 
 
@@ -253,15 +295,92 @@ class Rep_seq:
 			
 			#print progress 
 			Vgerm_complete +=1
-			print "%s clusters found from " % np.amax(T)	
-			print str(Vgerm_complete) +'/' +str(len(self.Reads_split_by_V)) + " germlines done!"
+			print "%s clusters created " % np.amax(T)	
+			print str(Vgerm_complete) +'/' +str(len(self.Reads_split_by_V)) + " germlines done!\n"
 
 
 		#Order most frequent to least frequent
 		All_clusters_sorted = order_clones(All_clusters)		
 		self.Clusters = All_clusters_sorted
+		self.num_clusters = len(All_clusters_sorted)
 
 
+
+
+
+	def sh_props(self):
+		if not self.Clones:
+			print "Run .find_clones() method first"
+			return ""
+
+		sh_dict = {'all classes' : [], 'IGHM': [], 'IGHG': [], 'IGHA': [], 'IGHE': [], 'IGHD':[]}
+
+		for clone in self.Clones:
+			sh_dict['all classes'].append(self.Clones[clone].sh)
+			if self.Clones[clone].ABtype:
+				sh_dict[self.Clones[clone].ABtype].append(self.Clones[clone].sh)
+
+		self.sh_dict = sh_dict
+		self.median_sh = {'all' : np.median(sh_dict['all classes']),
+						'IGHM' : np.median(sh_dict['IGHM']), 
+						'IGHG' : np.median(sh_dict['IGHG']),
+						'IGHA' : np.median(sh_dict['IGHA']),
+						'IGHE' : np.median(sh_dict['IGHE']),
+						'IGHD' : np.median(sh_dict['IGHD']),}
+
+
+		def sh_plots(data, label, color):
+			if not data:
+				print "no %s found"%label
+				return ""
+			bins = np.linspace(0, max(data), max(data)+1)
+
+			plt.rc('xtick', labelsize=15) 
+			plt.rc('ytick', labelsize=15)
+			# plt.rc('legend',fontsize=15)
+			# plt.rc('axes',labelsize=15)
+
+			plt.figure(num=None, figsize=(7, 5), dpi=80)
+			plt.hist(np.array(data), bins, color=color, alpha=.5, histtype = 'stepfilled')
+
+			plt.xlabel("Somatic Hypermutations", fontsize=15)
+			plt.ylabel("number of clones", fontsize=15) 
+			plt.legend([label],  fontsize=15)
+			plt.title(label, fontsize = 20)
+
+			plt.show()
+
+
+		#Make histograms for all classes
+		try:
+			c1, c2, c3, c4, c5, c6 = sns.color_palette("Set1", 6)
+			colors = [c1, c2, c3, c4, c5, c6]
+		except:
+			colors = ['r','b','g','y','k', 'c']
+		
+		color_index = 0
+		for key in list(sh_dict.keys()):
+			sh_plots(sh_dict[key], key, colors[color_index])
+			color_index+=1
+
+
+		#Make box and whisker plot
+		box_data = []
+		box_labels = []
+		for ab_class in ['IGHD', 'IGHM', 'IGHG', 'IGHA', 'IGHE' ]:
+			if len(sh_dict[ab_class])>5:
+				box_data.append(np.array(sh_dict[ab_class]))
+				box_labels.append(ab_class)
+
+
+		plt.figure(num=None, figsize=(7, 5), dpi=80)
+		plt.rc('xtick', labelsize=15) 
+		plt.rc('ytick', labelsize=15)
+
+		plt.boxplot(box_data)
+
+		plt.xticks([x+1 for x in range(len(box_labels))], box_labels,  fontsize=15)
+		plt.ylabel('Somatic Hypermutations', fontsize=15)
 
 
 

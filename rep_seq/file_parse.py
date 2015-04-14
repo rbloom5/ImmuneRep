@@ -16,7 +16,15 @@ class Ab_read:
 		self.cdr3 = cdr3
 		self.cdr2 = cdr2
 		self.cdr1 = cdr1
+	def __str__(self):
+		return u'Read V={V}, J={J}, type = {type}'.format(
+		V=self.V,
+		J=self.J,
+		type = self.ABtype
+	)
 
+	def __repr__(self):
+		return self.__str__()
 
 
 def remove_slash(string):
@@ -45,6 +53,9 @@ def parse_germ(germ_list):
 
 
 def parse_v_j(filepath, num, select_type): #filepath must be file with extension XXX.VDJ.H3.L3.CH1.fa from VDJfasta
+	#filename is the .VDJ.H3.L3.CH1.fa to parse
+	#number is the max number of reads
+	#select_type specifies if you only want one type of Ab (IGHG, IGHM etc.) is optional
 	Reads = {}
 	num_reads = 0
 	if not isinstance(select_type, list):
@@ -58,11 +69,12 @@ def parse_v_j(filepath, num, select_type): #filepath must be file with extension
 
 			for line in in_handle:
 				if re.search('^>', line):
+
+					#name is the ID in the file
 					name = line.split(';')[0].split(' ')[0][1:]
 					currentABtype = parse_germ(line.split(';')[6].split(' '))[0]
 
 					#check type
-
 					if select_type and currentABtype and (currentABtype[0] not in select_type):
 						continue
 

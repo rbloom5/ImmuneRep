@@ -7,6 +7,8 @@ import re
 import numpy as np
 from collections import Counter
 import itertools
+from joblib import Parallel, delayed  
+import multiprocessing
 
 import vj_split
 reload(vj_split)
@@ -24,6 +26,9 @@ import blast_clustering
 reload(blast_clustering)
 from blast_clustering import *
 
+import rep_stats
+reload(rep_stats)
+from rep_stats import *
 
 
 import matplotlib.pyplot as plt
@@ -152,75 +157,79 @@ class Rep_seq:
 		Vgerm_complete=0
 		All_clones = {}
 		Clones_split_by_V = {}
+
+
 		for Vgerm in self.Reads_split_by_V:
 			print "finding " + Vgerm + " clones from %s reads" % len(self.Reads_split_by_V[Vgerm])
 
-			Clones_split_by_V[Vgerm] = {}
-
-			#load in cdr3 sequences from Vgerm
-			all_cdr3s, cdr3_dict = load_cdrs(self.Reads_split_by_V[Vgerm], 'cdr3')
-			all_cdr2s, cdr2_dict = load_cdrs(self.Reads_split_by_V[Vgerm], 'cdr2')
-			all_cdr1s, cdr1_dict = load_cdrs(self.Reads_split_by_V[Vgerm], 'cdr1')
-			all_IDs, ID_dict = load_cdrs(self.Reads_split_by_V[Vgerm], 'ID')
-
-			#if VDJ didn't find the CDR3, skip to next
-			if all_cdr3s == []:
-				Vgerm_complete +=1	
-				print str(Vgerm_complete) +'/' +str(len(self.Reads_split_by_V)) + " germlines done!"
-				continue
-
-			#cluster all cdrs by maximum Hamming length = 1 in each
-			T = cluster_into_clones(all_cdr1s, all_cdr2s, all_cdr3s)
-
-			#list of numbers of clones
-			clones = [x+1 for x in range(np.amax(T))]
-
-			#find properties of the clone
-			for clone_num in clones: #clones is list of numbers from T
-
-				J, final_seq_1, final_seq_2, final_seq_3, \
-				num_reads, percent_reads, ABtype, IDs, Vmut, Jmut, sh = find_clone_props(all_cdr1s,\
-																		all_cdr2s,\
-																		all_cdr3s, \
-																		cdr3_dict,\
-																		T, \
-																		self.Reads_split_by_V[Vgerm], \
-																		self.num_Reads,\
-																		clone_num,\
-																		all_IDs)
-				#plug it all into a clone object
-				All_clones[clone_index] = Clone(V=Vgerm, \
-				                               J=J, \
-				                               cdr1 = Seq(final_seq_1, generic_protein), \
-				                               cdr2 = Seq(final_seq_2, generic_protein), \
-				                               cdr3 = Seq(final_seq_3, generic_protein), \
-				                               num_reads=num_reads, \
-				                               percent_reads=percent_reads, \
-				                               ABtype = ABtype,\
-				                               IDs = IDs,\
-				                               Vmut = Vmut,\
-				                               Jmut = Jmut,\
-				                               sh = sh)
-
-
-				Clones_split_by_V[Vgerm][clone_num] = Clone(V=Vgerm, \
-				                               			J=J, \
-				                               			cdr1 = Seq(final_seq_1, generic_protein), \
-				                               			cdr2 = Seq(final_seq_2, generic_protein), \
-				                               			cdr3 = Seq(final_seq_3, generic_protein), \
-				                               			num_reads=num_reads, \
-				                               			percent_reads=percent_reads,\
-				                               			ABtype = ABtype,\
-				                               			IDs = IDs,\
-				                               			Vmut = Vmut,\
-				                               			Jmut = Jmut,\
-				                               			sh = sh)
-				clone_index+=1
 			
-			#print progress 
-			Vgerm_complete +=1	
-			print "%s unique clones found " % np.amax(T)
-			print str(Vgerm_complete) +'/' +str(len(self.Reads_split_by_V)) + " germlines done!\n"
+
+			# Clones_split_by_V[Vgerm] = {}
+
+			# #load in cdr3 sequences from Vgerm
+			# all_cdr3s, cdr3_dict = load_cdrs(self.Reads_split_by_V[Vgerm], 'cdr3')
+			# all_cdr2s, cdr2_dict = load_cdrs(self.Reads_split_by_V[Vgerm], 'cdr2')
+			# all_cdr1s, cdr1_dict = load_cdrs(self.Reads_split_by_V[Vgerm], 'cdr1')
+			# all_IDs, ID_dict = load_cdrs(self.Reads_split_by_V[Vgerm], 'ID')
+
+			# #if VDJ didn't find the CDR3, skip to next
+			# if all_cdr3s == []:
+			# 	Vgerm_complete +=1	
+			# 	print str(Vgerm_complete) +'/' +str(len(self.Reads_split_by_V)) + " germlines done!"
+			# 	continue
+
+			# #cluster all cdrs by maximum Hamming length = 1 in each
+			# T = cluster_into_clones(all_cdr1s, all_cdr2s, all_cdr3s)
+
+			# #list of numbers of clones
+			# clones = [x+1 for x in range(np.amax(T))]
+
+			# #find properties of the clone
+			# for clone_num in clones: #clones is list of numbers from T
+
+			# 	J, final_seq_1, final_seq_2, final_seq_3, \
+			# 	num_reads, percent_reads, ABtype, IDs, Vmut, Jmut, sh = find_clone_props(all_cdr1s,\
+			# 															all_cdr2s,\
+			# 															all_cdr3s, \
+			# 															cdr3_dict,\
+			# 															T, \
+			# 															self.Reads_split_by_V[Vgerm], \
+			# 															self.num_Reads,\
+			# 															clone_num,\
+			# 															all_IDs)
+			# 	#plug it all into a clone object
+			# 	All_clones[clone_index] = Clone(V=Vgerm, \
+			# 	                               J=J, \
+			# 	                               cdr1 = Seq(final_seq_1, generic_protein), \
+			# 	                               cdr2 = Seq(final_seq_2, generic_protein), \
+			# 	                               cdr3 = Seq(final_seq_3, generic_protein), \
+			# 	                               num_reads=num_reads, \
+			# 	                               percent_reads=percent_reads, \
+			# 	                               ABtype = ABtype,\
+			# 	                               IDs = IDs,\
+			# 	                               Vmut = Vmut,\
+			# 	                               Jmut = Jmut,\
+			# 	                               sh = sh)
+
+
+			# 	Clones_split_by_V[Vgerm][clone_num] = Clone(V=Vgerm, \
+			# 	                               			J=J, \
+			# 	                               			cdr1 = Seq(final_seq_1, generic_protein), \
+			# 	                               			cdr2 = Seq(final_seq_2, generic_protein), \
+			# 	                               			cdr3 = Seq(final_seq_3, generic_protein), \
+			# 	                               			num_reads=num_reads, \
+			# 	                               			percent_reads=percent_reads,\
+			# 	                               			ABtype = ABtype,\
+			# 	                               			IDs = IDs,\
+			# 	                               			Vmut = Vmut,\
+			# 	                               			Jmut = Jmut,\
+			# 	                               			sh = sh)
+			# 	clone_index+=1
+			
+			# #print progress 
+			# Vgerm_complete +=1	
+			# print "%s unique clones found " % np.amax(T)
+			# print str(Vgerm_complete) +'/' +str(len(self.Reads_split_by_V)) + " germlines done!\n"
 
 
 		#Order most frequent to least frequent
@@ -232,6 +241,21 @@ class Rep_seq:
 		self.Clones = All_clones_sorted
 		self.Clones_split_by_V = Clones_split_by_V_sorted
 		self.num_clones = len(All_clones_sorted)
+
+		#find some frequency properties and distributions
+
+		#find the fraction of the repertoir that top clones take up in 1% intervals
+		#useful for plotting distributions
+		self.clone_distribution = find_distribution(self.Clones, 100, self.num_clones, self.num_Reads)
+
+		#find the fractions of repertoire the top 1, 10 and 100 clones take up 
+		self.top_clone_fraction, self.top_10_fraction, self.top_100_fraction = top_clone_fractions(self.Clones, self.num_Reads)
+
+		#find the fraction of the repertoire devoted to each AB type
+		#a dict with the keys "IGHG", "IGHM" etc.
+		self.ABtype_fractions, self.ABtype_unique = ABtype_fractions(self.Clones, self.num_clones, self.num_Reads)
+
+		clone_split_by_V_fractions = {}
 
 
 
@@ -367,7 +391,7 @@ class Rep_seq:
 		#Make box and whisker plot
 		box_data = []
 		box_labels = []
-		for ab_class in ['IGHD', 'IGHM', 'IGHG', 'IGHA', 'IGHE' ]:
+		for ab_class in ['IGHD', 'IGHM', 'IGHG', 'IGHA','IGHE']: #some problem with IGHE - fix later
 			if len(sh_dict[ab_class])>5:
 				box_data.append(np.array(sh_dict[ab_class]))
 				box_labels.append(ab_class)

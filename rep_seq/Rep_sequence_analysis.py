@@ -370,6 +370,12 @@ class Rep_seq:
 
 		bar_plt(clone_fractions, 'Fraction of total reads', 'Fractions of Repertoire for Top Clones')
 
+		# plot cumulative clone fractions
+		plt.figure(num=None, figsize=(7, 5), dpi=80)
+		plt.plot(np.array(self.clone_distribution).cumsum())
+		plt.xlabel('Top Clones (in percentage)', fontsize=15)
+		plt.ylabel('Cumulative Fraction of Reads',fontsize=15)
+
 
 
 

@@ -3,28 +3,7 @@
 from Bio.Seq import Seq
 from Bio.Alphabet import generic_dna, generic_protein
 import re
-
-
-class Ab_read:
-	def __init__(self, name = '', V = '', Vmut = '', J='', Jmut='', ABtype = '',cdr3=Seq(''),cdr2=Seq(''),cdr1=Seq('')):
-		self.name = name
-		self.V = V
-		self.Vmut = Vmut
-		self.J = J
-		self.Jmut = Jmut
-		self.ABtype = ABtype
-		self.cdr3 = cdr3
-		self.cdr2 = cdr2
-		self.cdr1 = cdr1
-	def __str__(self):
-		return u'Read V={V}, J={J}, type = {type}'.format(
-		V=self.V,
-		J=self.J,
-		type = self.ABtype
-	)
-
-	def __repr__(self):
-		return self.__str__()
+from ab_classes import *
 
 
 def remove_slash(string):

@@ -3,7 +3,7 @@
 from Bio.Seq import Seq
 from Bio.Alphabet import generic_dna, generic_protein
 import re
-
+import os
 import numpy as np
 from collections import Counter
 import itertools
@@ -12,8 +12,6 @@ import multiprocessing
 from multiprocessing import Pool, freeze_support
 from collections import OrderedDict
 
-# import dill
-# from pathos.multiprocessing import ProcessingPool
 
 import vj_split
 reload(vj_split)
@@ -41,6 +39,8 @@ try:
 	import seaborn as sns
 except:
 	pass
+# import ab_classes 
+# reload(ab_classes)
 from ab_classes import *
 
        
@@ -58,23 +58,24 @@ class Rep_seq:
 		#the key to the dict is the sequence identifier that vdjFasta uses
 
 		#num_Reads is the total number of reads
-		#Reads_split_by_V is a dict of dicts  where all the 
-		#Ab_read objects are grouped by the V germline 
-		#Format:  Reads_split_by_V = {Vgermline :{ID: AB_read object}}
+		#Reads_split_by_VJ is a dict of dicts  where all the 
+		#Ab_read objects are grouped by the VJ germlines 
+		#Format:  Reads_split_by_VJ = {VJgermline :{ID: AB_read object}}
 
 
+		self.filepath = filepath
 		print "loading sequences..."
 		self.Reads = parse_v_j(filepath, num, ABtype)
 		self.num_Reads = len(self.Reads)
 		print "finding V segments..."
-		self.Reads_split_by_V = v_split(self.Reads)
+		self.Reads_split_by_VJ = vj_split(self.Reads)
 
 		print "Calculating V segment usage..."
 		self.V_freqs = {}
 		self.V_fractions = {}
-		for Vgerm in self.Reads_split_by_V:
-			self.V_freqs[Vgerm] = len(self.Reads_split_by_V[Vgerm])
-			self.V_fractions[Vgerm] = len(self.Reads_split_by_V[Vgerm])/float(self.num_Reads)
+		for germ in self.Reads_split_by_VJ:
+			self.V_freqs[germ] = len(self.Reads_split_by_VJ[germ])
+			self.V_fractions[germ] = len(self.Reads_split_by_VJ[germ])/float(self.num_Reads)
 
 
 	def split_V_4(self):
@@ -83,9 +84,9 @@ class Rep_seq:
 
 		self.f4V_freqs = {}
 		self.f4V_fractions = {}
-		for Vgerm in self.Reads_split_by_f4V:
-			self.f4V_freqs[Vgerm] = len(self.Reads_split_by_f4V[Vgerm])
-			self.f4V_fractions[Vgerm] = len(self.Reads_split_by_f4V[Vgerm])/float(self.num_Reads)
+		for germ in self.Reads_split_by_f4V:
+			self.f4V_freqs[germ] = len(self.Reads_split_by_f4V[germ])
+			self.f4V_fractions[germ] = len(self.Reads_split_by_f4V[germ])/float(self.num_Reads)
 
 
 	def find_clones(self,parallel=False):
@@ -100,10 +101,10 @@ class Rep_seq:
 		#that this clone represents
 
 		clone_index = 1
-		Vgerm_complete=0
+		germ_complete=0
 		All_clones = {}
 		# All_clones = []
-		Clones_split_by_V = {}
+		Clones_split_by_VJ = {}
 
 
 		if parallel:
@@ -111,35 +112,35 @@ class Rep_seq:
 			pool = Pool(processes=num_cores)
 
 
-			results = pool.map(reads_to_clones, itertools.izip(itertools.repeat(self.Reads_split_by_V),\
-															list(self.Reads_split_by_V.keys()), \
+			results = pool.map(reads_to_clones, itertools.izip(itertools.repeat(self.Reads_split_by_VJ),\
+															list(self.Reads_split_by_VJ.keys()), \
 															itertools.repeat(self.num_Reads)))
 			All_clones = [result[0] for result in results]
-			ind_Clones_split_by_V = [result[1] for result in results]		
+			ind_Clones_split_by_VJ = [result[1] for result in results]		
 			All_clones = list(itertools.chain.from_iterable(All_clones))
 			All_clones = {key+1: value for key, value in enumerate(All_clones)}
 
-			for item in ind_Clones_split_by_V:
-				Clones_split_by_V[item.keys()[0]] = item[item.keys()[0]]
+			for item in ind_Clones_split_by_VJ:
+				Clones_split_by_VJ[item.keys()[0]] = item[item.keys()[0]]
 
 
 		else:
-			for Vgerm in self.Reads_split_by_V:
-				print "finding " + Vgerm + " clones from %s reads" % len(self.Reads_split_by_V[Vgerm])
+			for germ in self.Reads_split_by_VJ:
+				print "finding " + germ + " clones from %s reads" % len(self.Reads_split_by_VJ[germ])
 
 
-				Clones_split_by_V[Vgerm] = {}
+				Clones_split_by_VJ[germ] = {}
 
-				#load in cdr3 sequences from Vgerm
-				all_cdr3s, cdr3_dict = load_cdrs(self.Reads_split_by_V[Vgerm], 'cdr3')
-				all_cdr2s, cdr2_dict = load_cdrs(self.Reads_split_by_V[Vgerm], 'cdr2')
-				all_cdr1s, cdr1_dict = load_cdrs(self.Reads_split_by_V[Vgerm], 'cdr1')
-				all_IDs, ID_dict = load_cdrs(self.Reads_split_by_V[Vgerm], 'ID')
+				#load in cdr3 sequences from germ
+				all_cdr3s, cdr3_dict = load_cdrs(self.Reads_split_by_VJ[germ], 'cdr3')
+				all_cdr2s, cdr2_dict = load_cdrs(self.Reads_split_by_VJ[germ], 'cdr2')
+				all_cdr1s, cdr1_dict = load_cdrs(self.Reads_split_by_VJ[germ], 'cdr1')
+				all_IDs, ID_dict = load_cdrs(self.Reads_split_by_VJ[germ], 'ID')
 
 				#if VDJ didn't find the CDR3, skip to next
 				if all_cdr3s == []:
-					Vgerm_complete +=1	
-					print str(Vgerm_complete) +'/' +str(len(self.Reads_split_by_V)) + " germlines done!"
+					germ_complete +=1	
+					print str(germ_complete) +'/' +str(len(self.Reads_split_by_VJ)) + " germlines done!"
 					continue
 
 				#cluster all cdrs by maximum Hamming length = 1 in each
@@ -157,12 +158,12 @@ class Rep_seq:
 																			all_cdr3s, \
 																			cdr3_dict,\
 																			T, \
-																			self.Reads_split_by_V[Vgerm], \
+																			self.Reads_split_by_VJ[germ], \
 																			self.num_Reads,\
 																			clone_num,\
 																			all_IDs)
 					#plug it all into a clone object
-					All_clones[clone_index] = Clone(V=Vgerm, \
+					All_clones[clone_index] = Clone(V=germ, \
 					                               J=J, \
 					                               cdr1 = Seq(final_seq_1, generic_protein), \
 					                               cdr2 = Seq(final_seq_2, generic_protein), \
@@ -176,7 +177,7 @@ class Rep_seq:
 					                               sh = sh)
 
 
-					Clones_split_by_V[Vgerm][clone_num] = Clone(V=Vgerm, \
+					Clones_split_by_VJ[germ][clone_num] = Clone(V=germ, \
 					                               			J=J, \
 					                               			cdr1 = Seq(final_seq_1, generic_protein), \
 					                               			cdr2 = Seq(final_seq_2, generic_protein), \
@@ -191,36 +192,61 @@ class Rep_seq:
 					clone_index+=1
 				
 				#print progress 
-				Vgerm_complete +=1	
+				germ_complete +=1	
 				print "%s unique clones found " % np.amax(T)
-				print str(Vgerm_complete) +'/' +str(len(self.Reads_split_by_V)) + " germlines done!\n"
+				print str(germ_complete) +'/' +str(len(self.Reads_split_by_VJ)) + " germlines done!\n"
 
 
 		#Order most frequent to least frequent
 		All_clones_sorted = order_clones(All_clones)
-		Clones_split_by_V_sorted = {}
-		for V in Clones_split_by_V:
-			Clones_split_by_V_sorted[V] = order_clones(Clones_split_by_V[V])
+		Clones_split_by_VJ_sorted = {}
+		for V in Clones_split_by_VJ:
+			Clones_split_by_VJ_sorted[V] = order_clones(Clones_split_by_VJ[V])
 		
 		self.Clones = All_clones_sorted
-		self.Clones_split_by_V = Clones_split_by_V_sorted
+		self.Clones_split_by_VJ = Clones_split_by_VJ_sorted
 		self.num_clones = len(All_clones_sorted)
+
+
+
+
+	def tree(self):
+		#a function that will run immunitree to make lineage trees
+		#the process is to first make a file for each VJ pair then write the
+		# sequences for all the clones from that VJ pair to the file
+		# then shoot all the files into immunitree
+		# get the output, then delete all the files
+
+
+		#make somewhat descriptive directory and file names
+		head, tail = os.path.split(self.filepath[0])
+		dirstring = tail.split('.')[0]+'_vj_files'
+		os.system("mkdir "+dirstring)
+		# os.mkdir(dirstring, '-rwxr-xr-x')
+		# os.chmod(dirstring, '-rwxr-xr-x')
+		for germ in self.Clones_split_by_VJ:
+			filestring = dirstring+'/immTree_'+germ+'.fasta'
+			with open(filestring, 'w') as f:
+				for clone in self.Clones_split_by_VJ[germ]:
+					best_id = find_best_id(self.Clones_split_by_VJ[germ][clone], self.Reads_split_by_VJ[germ])
+					find_and_write(best_id, f, self.filepath[0])
+
 
 
 
 
 	def find_clusters(self):
 		cluster_index = 1
-		Vgerm_complete=0
+		germ_complete=0
 		All_clusters = {}
 		read_inds_sum=0
-		for Vgerm in self.Clones_split_by_V:
-			print "finding " + Vgerm + " clusters from %s clones" % len(self.Clones_split_by_V[Vgerm])
+		for germ in self.Clones_split_by_VJ:
+			print "finding " + germ + " clusters from %s clones" % len(self.Clones_split_by_VJ[germ])
 
-			all_cdr3s, cdr3_dict = load_cdrs(self.Clones_split_by_V[Vgerm], 'cdr3')
-			all_cdr2s, cdr2_dict = load_cdrs(self.Clones_split_by_V[Vgerm], 'cdr2')
-			all_cdr1s, cdr1_dict = load_cdrs(self.Clones_split_by_V[Vgerm], 'cdr1')
-			all_IDs, ID_dict = load_cdrs(self.Clones_split_by_V[Vgerm], 'IDs')
+			all_cdr3s, cdr3_dict = load_cdrs(self.Clones_split_by_VJ[germ], 'cdr3')
+			all_cdr2s, cdr2_dict = load_cdrs(self.Clones_split_by_VJ[germ], 'cdr2')
+			all_cdr1s, cdr1_dict = load_cdrs(self.Clones_split_by_VJ[germ], 'cdr1')
+			all_IDs, ID_dict = load_cdrs(self.Clones_split_by_VJ[germ], 'IDs')
 
 			cdrs=[]
 			for i in range(len(all_cdr3s)):
@@ -249,11 +275,11 @@ class Rep_seq:
 
 				Js, ABtypes, num_reads, percent_reads = find_cluster_props(cluster_cdr3s,\
 																		cdr3_dict,\
-																		self.Clones_split_by_V[Vgerm], \
+																		self.Clones_split_by_VJ[germ], \
 																		read_inds)
 
 
-				All_clusters[cluster_index] = Cluster(V=Vgerm, \
+				All_clusters[cluster_index] = Cluster(V=germ, \
 				                               Js=Js, \
 				                               cdr1s = cluster_cdr1s, \
 				                               cdr2s = cluster_cdr2s, \
@@ -267,9 +293,9 @@ class Rep_seq:
 
 			
 			#print progress 
-			Vgerm_complete +=1
+			germ_complete +=1
 			print "%s clusters created " % np.amax(T)	
-			print str(Vgerm_complete) +'/' +str(len(self.Reads_split_by_V)) + " germlines done!\n"
+			print str(germ_complete) +'/' +str(len(self.Reads_split_by_VJ)) + " germlines done!\n"
 
 
 		#Order most frequent to least frequent
@@ -289,7 +315,7 @@ class Rep_seq:
 		#### Get Somatic Hypermutation Stats ######
 		sh_dict = {'all classes' : [], 'IGHM': [], 'IGHG': [], 'IGHA': [], 'IGHE': [], 'IGHD':[]}
 
-		for clone in self.Clones:
+		for clone in self.Clones:  #is reads or clones better?
 			sh_dict['all classes'].append(self.Clones[clone].sh)
 			if self.Clones[clone].ABtype:
 				sh_dict[self.Clones[clone].ABtype].append(self.Clones[clone].sh)
@@ -320,7 +346,7 @@ class Rep_seq:
 
 
 
-
+	def plots(self):
 
 		##################################
 		           # PLOTS # 
@@ -336,17 +362,17 @@ class Rep_seq:
 			colors = ['r','b','g','y','k', 'c']
 		
 		color_index = 0
-		for key in list(sh_dict.keys()):
-			sh_plots(sh_dict[key], key, colors[color_index])
+		for key in list(self.sh_dict.keys()):
+			sh_plots(self.sh_dict[key], key, colors[color_index])
 			color_index+=1
 
 
 		###### Make box and whisker plot ########
 		box_data = []
 		box_labels = []
-		for ab_class in ['IGHD', 'IGHM', 'IGHG', 'IGHA','IGHE']: #some problem with IGHE - fix later
-			if len(sh_dict[ab_class])>5:
-				box_data.append(np.array(sh_dict[ab_class]))
+		for ab_class in ['IGHD', 'IGHM', 'IGHG', 'IGHA','IGHE']: 
+			if len(self.sh_dict[ab_class])>5:
+				box_data.append(np.array(self.sh_dict[ab_class]))
 				box_labels.append(ab_class)
 
 		plt.figure(num=None, figsize=(7, 5), dpi=80)

@@ -6,7 +6,7 @@ from Bio.Alphabet import generic_dna, generic_protein
 
 
 class Ab_read:
-	def __init__(self, name = '', V = '', Vmut = '', J='', Jmut='', ABtype = '',cdr3=Seq(''),cdr2=Seq(''),cdr1=Seq('')):
+	def __init__(self, name = '', V = '', Vmut = [0], J='', Jmut=[0], ABtype = '',cdr3=Seq(''),cdr2=Seq(''),cdr1=Seq('')):
 		self.name = name
 		self.V = V
 		self.Vmut = Vmut
@@ -16,6 +16,14 @@ class Ab_read:
 		self.cdr3 = cdr3
 		self.cdr2 = cdr2
 		self.cdr1 = cdr1
+
+		if Vmut and Jmut:
+			self.sh = Vmut[0]+Jmut[0]
+		elif Vmut:
+			self.sh = Vmut[0]
+		else:
+			self.sh = 0
+
 	def __str__(self):
 		return u'Read V={V}, J={J}, type = {type}'.format(
 		V=self.V,

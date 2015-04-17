@@ -4,6 +4,7 @@ from Bio.Seq import Seq
 from Bio.Alphabet import generic_dna, generic_protein
 import re
 from ab_classes import *
+from collections import Counter
 
 
 def remove_slash(string):
@@ -11,7 +12,7 @@ def remove_slash(string):
     #file names without looking like a directory
     for i in range(len(string)):
         if string[i] == '/':
-            string = string[:i] + '_' + string[i+1:]
+            string = string[:i] + '%' + string[i+1:]
     return string
             
     
@@ -24,7 +25,7 @@ def parse_germ(germ_list):
     #pick out the germline name and # of mismatches between sequencer read and germline
     for i in range(germ_matches):
         germline.append(remove_slash(germ_list[i*3]))
-        mutations.append(germ_list[i*3+2])
+        mutations.append(int(germ_list[i*3+2]))
     
     return germline, mutations
 
@@ -102,7 +103,38 @@ def load_cdrs(clones, cdr):
 	return all_cdrs, cdr_dict
 
 
+def mostCommon(items):
+    c = Counter(items)
+    mode = c.most_common(1)[0][0]
+    return mode
 
+
+def find_best_id(clone, reads):
+	cdr3s = []
+	for cid in clone.IDs:
+		cdr3s.append(str(reads[cid].cdr3))
+
+	final_cdr3 = mostCommon(cdr3s)
+	for cid in clone.IDs:
+		if str(reads[cid].cdr3)==final_cdr3:
+			best_id = cid
+			return best_id
+
+
+
+def find_and_write(best_id, f, big_file):
+	write = 0
+	with open(big_file, 'r') as bf:
+		for line in bf:
+
+			if write ==1 and re.search('^>', line):
+				return
+
+			if line.split(' ')[0][1:] == best_id:
+				write=1
+
+			if write==1:
+				f.write(line)
 
 
 

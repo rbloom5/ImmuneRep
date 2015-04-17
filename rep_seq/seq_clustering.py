@@ -77,6 +77,9 @@ def mostCommon(items):
     return mode
 
 
+
+
+
 def order_clones(All_clones):
 	sorted_clones = {}
 	freq_dict={}
@@ -88,6 +91,9 @@ def order_clones(All_clones):
 			sorted_clones[i+1] = All_clones[sorted_freqs[i]]
 
 	return sorted_clones
+
+
+
 
 
 def find_clone_props(all_cdr1s, all_cdr2s, all_cdr3s, cdr3_dict, T, Vreads, num_Reads, clone_num, all_IDs):
@@ -136,8 +142,8 @@ def find_clone_props(all_cdr1s, all_cdr2s, all_cdr3s, cdr3_dict, T, Vreads, num_
 
     #put in SH
     if Vreads[cdr3_dict[final_seq_3]].Vmut and Vreads[cdr3_dict[final_seq_3]].Jmut:
-        Vmut = int(Vreads[cdr3_dict[final_seq_3]].Vmut[0])
-        Jmut = int(Vreads[cdr3_dict[final_seq_3]].Jmut[0])
+        Vmut = int(mostCommon(Vreads[cdr3_dict[final_seq_3]].Vmut))
+        Jmut = int(mostCommon(Vreads[cdr3_dict[final_seq_3]].Jmut))
         sh = Vmut + Jmut
 
     return J, final_seq_1, final_seq_2, final_seq_3, num_reads, \

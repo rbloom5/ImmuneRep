@@ -75,6 +75,37 @@ def v_split(Reads):
     return Vdict
 
 
+
+
+def vj_split(Reads):
+    #Rep must be dict of Ab_read objects
+    VJs = []
+    VJdict = {}
+    searchable_Reads = Reads.copy() 
+
+    for item in Reads:
+        if Reads[item].V and Reads[item].J:
+            currentVJ = Reads[item].V[0]+ '_'+Reads[item].J[0] #if there is more than 1 V match, arbitrarily picks first one
+            if currentVJ not in VJs:
+                VJs.append(currentVJ)
+                VJdict[currentVJ] = {}
+
+                IDs = [] #this is a dict where I store the keys that match currentV so
+                        #I can delete them afterwards and not waste search time
+                        #iterating over them again
+                for item2 in searchable_Reads:
+                    if searchable_Reads[item2].V and searchable_Reads[item2].J:
+                        if searchable_Reads[item2].V[0]+'_'+searchable_Reads[item2].J[0] == currentVJ:
+                            IDs.append(item2)
+                            VJdict[currentVJ][item2]  = searchable_Reads[item2]
+                for ID in IDs:
+                    del searchable_Reads[ID]
+
+    return VJdict
+
+
+
+
 def v_first4_split(Reads):
     #Rep must be dict of Ab_read objects
     #this groups Rep into V segments based on first four characters (i.e. IVH4)

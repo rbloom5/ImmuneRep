@@ -11,6 +11,9 @@ from joblib import Parallel, delayed
 import multiprocessing
 from multiprocessing import Pool, freeze_support
 from collections import OrderedDict
+from ete2 import Tree
+import glob
+from pandas import *
 
 
 import vj_split
@@ -32,6 +35,10 @@ from blast_clustering import *
 import rep_stats
 reload(rep_stats)
 from rep_stats import *
+
+import Tree_analysis
+reload(Tree_analysis)
+from Tree_analysis import *
 
 
 import matplotlib.pyplot as plt
@@ -232,7 +239,31 @@ class Rep_seq:
 					find_and_write(best_id, f, self.filepath[0])
 
 
+		#This section creates a dict where the key is the VJ pair (seperated by _) and the object has the 
+		#ete2 tree structure. Each node in the tree structure has associated with it; a name, size, mutations from parent, and
+		#a SEQ object. The second dict is identical to the first, it just has the leaves removed
+		self.tree_dict = {}
+		self.pruned_tree_dict ={}
 
+		for entry in glob.glob('output/*.node.txt'):
+			VJ_name = '_'.join(entry.split('/')[-1].split('.')[0].split('_')[1:3])
+			self.tree_dict[VJ_name] = convert_immunitree_to_ete2(entry)
+			self.pruned_tree_dict[VJ_name] = convert_immunitree_to_ete2(entry)
+			for leaf in self.pruned_tree_dict[VJ_name].get_leaves(): leaf.detach()
+
+		#This section creates several histogram matrices to compare tree statistics across patients
+		#Make VJ Matrix for each feature here
+		self.tree_size = Make_VJ_Matrix()
+        self.pruned_tree_size = Make_VJ_Matrix()
+
+        for tree in self.tree_dict:
+            V = tree.split('_')[0]
+            J = tree.split('_')[1]
+  
+  			#Write function to calculate statistic in Tree_analysis.py and call here
+            self.tree_size[J].loc[V] = calculate_tree_size(self.tree_dict[tree])
+            self.pruned_tree_size[J].loc[V] = calculate_tree_size(self.pruned_tree_dict[tree])
+           
 
 
 	def find_clusters(self):

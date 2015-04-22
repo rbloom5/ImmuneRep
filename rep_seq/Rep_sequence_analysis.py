@@ -13,6 +13,7 @@ from multiprocessing import Pool, freeze_support
 from collections import OrderedDict
 
 
+
 import vj_split
 reload(vj_split)
 from vj_split import *
@@ -222,14 +223,26 @@ class Rep_seq:
 		head, tail = os.path.split(self.filepath[0])
 		dirstring = tail.split('.')[0]+'_vj_files'
 		os.system("mkdir "+dirstring)
-		# os.mkdir(dirstring, '-rwxr-xr-x')
-		# os.chmod(dirstring, '-rwxr-xr-x')
+
+		# make fasta file for all clones in each VJ pair
 		for germ in self.Clones_split_by_VJ:
 			filestring = dirstring+'/immTree_'+germ+'.fasta'
 			with open(filestring, 'w') as f:
 				for clone in self.Clones_split_by_VJ[germ]:
 					best_id = find_best_id(self.Clones_split_by_VJ[germ][clone], self.Reads_split_by_VJ[germ])
 					find_and_write(best_id, f, self.filepath[0])
+
+		# get locations of stuff immunitree needs and set number of iterations
+		phylo_path = os.path.normpath(os.getcwd() + os.sep + os.pardir) +'/immunitree_phylo/'
+		data_path = os.path.join(os.cwd(), dirstring) + '/'
+		nIter = 100 #should do 300+ for large repertoires
+
+		# bridge to matlab and run immunitree
+		session = MatlabSession()
+
+		# results = pool.map(reads_to_clones, itertools.izip(itertools.repeat(self.Reads_split_by_VJ),\
+															# list(self.Reads_split_by_VJ.keys()), \
+															# itertools.repeat(self.num_Reads)))
 
 
 

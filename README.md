@@ -16,8 +16,11 @@ the classes used within the Rep-seq class (AB_read, Clone, Cluster) are in the f
 
 initialize:
 Rep_seq(filepath, num=False, ABtype=[])
+
 the rep seq class is made to hold and calculate all the useful properties from a patients b-cell repertoire
+
 inputs:
+
 file path: the path to the .VDJ.H3.L3.CH1.fa from vjd-fasta
 num: the maximum number of reads you want to analyze.  If false, it will take all the reads in the file
 ABtype: if you only want to take antibodies of a certain type (i.e. IGHG, IGHM etc.)  if blank, it will take all the antibodies regardless of type

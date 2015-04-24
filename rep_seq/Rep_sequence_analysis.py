@@ -330,7 +330,7 @@ class Rep_seq:
 
 		for clone in self.Clones:  #is reads or clones better?
 			sh_dict['all classes'].append(self.Clones[clone].sh)
-			if self.Clones[clone].ABtype:
+			if self.Clones[clone].ABtype and self.Clones[clone].ABtype in sh_dict:
 				sh_dict[self.Clones[clone].ABtype].append(self.Clones[clone].sh)
 
 		self.sh_dict = sh_dict

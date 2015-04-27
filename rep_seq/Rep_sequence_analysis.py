@@ -55,7 +55,7 @@ class Rep_seq:
 
 		#self.Reads is a dict of Ab_read objects
 		#each Ab_read object contains the V and J segments(s) tha VDJ fasta aligned,
-		#the cdr3 sequence and the number of mutations from
+		#the cdr3 sequence and the number of mutations 
 		#the key to the dict is the sequence identifier that vdjFasta uses
 
 		#num_Reads is the total number of reads
@@ -72,11 +72,11 @@ class Rep_seq:
 		self.Reads_split_by_VJ = vj_split(self.Reads)
 
 		print "Calculating V segment usage..."
-		self.V_freqs = {}
-		self.V_fractions = {}
+		self.VJ_freqs = {}
+		self.VJ_fractions = {}
 		for germ in self.Reads_split_by_VJ:
-			self.V_freqs[germ] = len(self.Reads_split_by_VJ[germ])
-			self.V_fractions[germ] = len(self.Reads_split_by_VJ[germ])/float(self.num_Reads)
+			self.VJ_freqs[germ] = len(self.Reads_split_by_VJ[germ])
+			self.VJ_fractions[germ] = len(self.Reads_split_by_VJ[germ])/float(self.num_Reads)
 
 
 	def split_V_4(self):
@@ -91,9 +91,9 @@ class Rep_seq:
 
 
 	def find_clones(self,parallel=False):
-		#This creates a dict of clone objects from all the cdr3's in reads
-		#a clone object combines cdr3's that are identical as well as
-		#cdr3's within a Hamming distance of 1 from each other (to 
+		#This creates a dict of clone objects from all the sequences in reads
+		#a clone object combines sequences that are identical as well as
+		#within a Hamming distance of 1 from each other (to 
 		#account for sequencing errors - see von Budingen, 2012	)
 		
 		#the keys to the dict are numbers that correspond to the read rank of
@@ -232,13 +232,13 @@ class Rep_seq:
 					best_id = find_best_id(self.Clones_split_by_VJ[germ][clone], self.Reads_split_by_VJ[germ])
 					find_and_write(best_id, f, self.filepath[0])
 
+
 		# get locations of stuff immunitree needs and set number of iterations
 		phylo_path = os.path.normpath(os.getcwd() + os.sep + os.pardir) +'/immunitree_phylo/'
 		data_path = os.path.join(os.cwd(), dirstring) + '/'
-		nIter = 100 #should do 300+ for large repertoires
+		nIter = 300 #should do 300+ for large repertoires
 
-		# bridge to matlab and run immunitree
-		session = MatlabSession()
+
 
 		# results = pool.map(reads_to_clones, itertools.izip(itertools.repeat(self.Reads_split_by_VJ),\
 															# list(self.Reads_split_by_VJ.keys()), \
@@ -380,6 +380,8 @@ class Rep_seq:
 			color_index+=1
 
 
+
+
 		###### Make box and whisker plot ########
 		box_data = []
 		box_labels = []
@@ -396,13 +398,14 @@ class Rep_seq:
 		plt.ylabel('Somatic Hypermutations', fontsize=15)
 
 
-		## Plot Ab type fractions ###
+
+
+		######## Plot Ab type fractions #############
+
 		bar_plt(self.ABtype_fractions, 'Fraction of reads', 'AB type Read Fractions')
 		bar_plt(self.ABtype_unique, 'Fraction of unique clones', 'AB type Fraction of Unique Clones', color="#F08080")
 
 		#print clone fraction distributions
-		OrderedDict([('a', 1), ('b', 2), ('c', 3)])
-
 		clone_fractions = OrderedDict([('top clone', self.top_clone_fraction), \
 							('top 10 clones', self.top_10_fraction), \
 							('top 100 clones', self.top_100_fraction)])
@@ -417,18 +420,24 @@ class Rep_seq:
 
 
 
+		#######  Plot VJ frequencies  ##########
+		self.plot_VJ_fractions()
 
 
 
-	def plot_V_freqs(self, f4=False):
+
+
+
+
+	def plot_VJ_freqs(self, f4=False):
 		if f4:
-			data = self.f4V_freqs
+			data = self.f4VJ_freqs
 		else:
-			data = self.V_freqs
+			data = self.VJ_freqs
 
 		plt.bar(range(len(data)), data.values(), align='center')
 		plt.xticks(range(len(data)), data.keys(), rotation=90)
-		plt.xlabel('V-Germlines')
+		plt.xlabel('VJ-Germlines')
 		plt.ylabel('Reads')
 		plt.show()
 
@@ -437,15 +446,15 @@ class Rep_seq:
 
 
 
-	def plot_V_fractions(self, f4=False):
+	def plot_VJ_fractions(self, f4=False):
 		if f4:
-			data = self.f4V_fractions
+			data = self.f4VJ_fractions
 		else:
-			data = self.V_fractions
+			data = self.VJ_fractions
 
 		plt.bar(range(len(data)), data.values(), align='center')
 		plt.xticks(range(len(data)), data.keys(), rotation=90)
-		plt.xlabel('V-Germlines')
+		plt.xlabel('VJ-Germlines')
 		plt.ylabel('Fraction of Repertoire')
 		plt.show()		
 

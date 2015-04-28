@@ -63,20 +63,21 @@ class Rep_seq:
 		#Ab_read objects are grouped by the VJ germlines 
 		#Format:  Reads_split_by_VJ = {VJgermline :{ID: AB_read object}}
 
+		self.features={}
 
 		self.filepath = filepath
 		print "loading sequences..."
 		self.Reads = parse_v_j(filepath, num, ABtype)
-		self.num_Reads = len(self.Reads)
+		self.features['num_Reads'] = len(self.Reads)
 		print "finding V segments..."
 		self.Reads_split_by_VJ = vj_split(self.Reads)
 
 		print "Calculating V segment usage..."
-		self.VJ_freqs = {}
-		self.VJ_fractions = {}
+		self.features['VJ_freqs'] = {}
+		self.features['VJ_fractions'] = {}
 		for germ in self.Reads_split_by_VJ:
-			self.VJ_freqs[germ] = len(self.Reads_split_by_VJ[germ])
-			self.VJ_fractions[germ] = len(self.Reads_split_by_VJ[germ])/float(self.num_Reads)
+			self.features['VJ_freqs'][germ] = len(self.Reads_split_by_VJ[germ])
+			self.features['VJ_fractions'][germ] = len(self.Reads_split_by_VJ[germ])/float(self.features['num_Reads'])
 
 
 	def split_V_4(self):
@@ -84,10 +85,10 @@ class Rep_seq:
 		self.Reads_split_by_f4V = v_first4_split(self.Reads)
 
 		self.f4V_freqs = {}
-		self.f4V_fractions = {}
+		self.features['f4V_fractions'] = {}
 		for germ in self.Reads_split_by_f4V:
 			self.f4V_freqs[germ] = len(self.Reads_split_by_f4V[germ])
-			self.f4V_fractions[germ] = len(self.Reads_split_by_f4V[germ])/float(self.num_Reads)
+			self.features['f4V_fractions'][germ] = len(self.Reads_split_by_f4V[germ])/float(self.features['num_Reads'])
 
 
 	def find_clones(self,parallel=False):
@@ -115,7 +116,7 @@ class Rep_seq:
 
 			results = pool.map(reads_to_clones, itertools.izip(itertools.repeat(self.Reads_split_by_VJ),\
 															list(self.Reads_split_by_VJ.keys()), \
-															itertools.repeat(self.num_Reads)))
+															itertools.repeat(self.features['num_Reads'])))
 			All_clones = [result[0] for result in results]
 			ind_Clones_split_by_VJ = [result[1] for result in results]		
 			All_clones = list(itertools.chain.from_iterable(All_clones))
@@ -160,7 +161,7 @@ class Rep_seq:
 																			cdr3_dict,\
 																			T, \
 																			self.Reads_split_by_VJ[germ], \
-																			self.num_Reads,\
+																			self.features['num_Reads'],\
 																			clone_num,\
 																			all_IDs)
 					#plug it all into a clone object
@@ -206,7 +207,7 @@ class Rep_seq:
 		
 		self.Clones = All_clones_sorted
 		self.Clones_split_by_VJ = Clones_split_by_VJ_sorted
-		self.num_clones = len(All_clones_sorted)
+		self.features['num_clones'] = len(All_clones_sorted)
 
 
 
@@ -215,7 +216,7 @@ class Rep_seq:
 		#a function that will run immunitree to make lineage trees
 		#the process is to first make a file for each VJ pair then write the
 		# sequences for all the clones from that VJ pair to the file
-		# then shoot all the files into immunitree
+		# then shoot all the files into a compiled version of immunitree
 		# get the output, then delete all the files
 
 
@@ -223,26 +224,41 @@ class Rep_seq:
 		head, tail = os.path.split(self.filepath[0])
 		dirstring = tail.split('.')[0]+'_vj_files'
 		os.system("mkdir "+dirstring)
-
+		file_list = []
 		# make fasta file for all clones in each VJ pair
 		for germ in self.Clones_split_by_VJ:
 			filestring = dirstring+'/immTree_'+germ+'.fasta'
+			file_list.append(filestring)
 			with open(filestring, 'w') as f:
 				for clone in self.Clones_split_by_VJ[germ]:
 					best_id = find_best_id(self.Clones_split_by_VJ[germ][clone], self.Reads_split_by_VJ[germ])
 					find_and_write(best_id, f, self.filepath[0])
 
 
-		# get locations of stuff immunitree needs and set number of iterations
-		phylo_path = os.path.normpath(os.getcwd() + os.sep + os.pardir) +'/immunitree_phylo/'
-		data_path = os.path.join(os.cwd(), dirstring) + '/'
+		# This function just makes running bash commands (below) easier
+		def bash(cmd):
+			process = subprocess.Popen(cmd.split(),stdout=subprocess.PIPE)
+			output = process.communicate()[0]
+			return output
+
+		# set up a parallell processing pool
+		pool = Pool(processes=num_cores)
 		nIter = 300 #should do 300+ for large repertoires
+		fstrings_for_pool=[]
 
+		matlab_call = '/home/ubuntu/imm_tree_test/run_run_immunitree.sh \
+						/usr/local/MATLAB/MATLAB_Compiler_Runtime/v83/ '
+						#/home/ubuntu/SRR1383448_vj_files/immTree_IGHV1-2_IGHJ4.fasta 50'
 
+		#make list of all the bash calls (one for each VJ file we input to immunitree)
+		for f in file_list:
+			fstrings_for_pool.append(matlab_call + f + ' %s'%nIter)
 
-		# results = pool.map(reads_to_clones, itertools.izip(itertools.repeat(self.Reads_split_by_VJ),\
-															# list(self.Reads_split_by_VJ.keys()), \
-															# itertools.repeat(self.num_Reads)))
+		#run immunitree on all cores, the .node files are stored at 
+		results = pool.map(bash, fstrings_for_pool)
+
+		#delete all the temp vj-files
+		bash('sudo rm -f %s'%dirstring)
 
 
 
@@ -314,7 +330,7 @@ class Rep_seq:
 		#Order most frequent to least frequent
 		All_clusters_sorted = order_clones(All_clusters)		
 		self.Clusters = All_clusters_sorted
-		self.num_clusters = len(All_clusters_sorted)
+		self.features['num_clusters'] = len(All_clusters_sorted)
 
 
 
@@ -333,8 +349,8 @@ class Rep_seq:
 			if self.Clones[clone].ABtype:
 				sh_dict[self.Clones[clone].ABtype].append(self.Clones[clone].sh)
 
-		self.sh_dict = sh_dict
-		self.median_sh = {'all' : np.median(sh_dict['all classes']),
+		self.features['sh_dict'] = sh_dict
+		self.features['median_sh'] = {'all' : np.median(sh_dict['all classes']),
 						'IGHM' : np.median(sh_dict['IGHM']), 
 						'IGHG' : np.median(sh_dict['IGHG']),
 						'IGHA' : np.median(sh_dict['IGHA']),
@@ -347,14 +363,14 @@ class Rep_seq:
 
 		#find the fraction of the repertoir that top clones take up in 1% intervals
 		#useful for plotting distributions
-		self.clone_distribution = find_distribution(self.Clones, 100, self.num_clones, self.num_Reads)
+		self.features['clone_distribution'] = find_distribution(self.Clones, 100, self.features['num_clones'], self.features['num_Reads'])
 
 		#find the fractions of repertoire the top 1, 10 and 100 clones take up 
-		self.top_clone_fraction, self.top_10_fraction, self.top_100_fraction = top_clone_fractions(self.Clones, self.num_Reads)
+		self.features['top_clone_fraction'], self.features['top_10_fraction'], self.features['top_100_fraction'] = top_clone_fractions(self.Clones, self.features['num_Reads'])
 
 		#find the fraction of the repertoire devoted to each AB type
 		#a dict with the keys "IGHG", "IGHM" etc.
-		self.ABtype_fractions, self.ABtype_unique = ABtype_fractions(self.Clones, self.num_clones, self.num_Reads)
+		self.features['ABtype_fractions'], self.features['ABtype_unique'] = ABtype_fractions(self.Clones, self.features['num_clones'], self.features['num_Reads'])
 
 
 
@@ -375,8 +391,8 @@ class Rep_seq:
 			colors = ['r','b','g','y','k', 'c']
 		
 		color_index = 0
-		for key in list(self.sh_dict.keys()):
-			sh_plots(self.sh_dict[key], key, colors[color_index])
+		for key in list(self.features['sh_dict'].keys()):
+			sh_plots(self.features['sh_dict'][key], key, colors[color_index])
 			color_index+=1
 
 
@@ -386,8 +402,8 @@ class Rep_seq:
 		box_data = []
 		box_labels = []
 		for ab_class in ['IGHD', 'IGHM', 'IGHG', 'IGHA','IGHE']: 
-			if len(self.sh_dict[ab_class])>5:
-				box_data.append(np.array(self.sh_dict[ab_class]))
+			if len(self.features['sh_dict'][ab_class])>5:
+				box_data.append(np.array(self.features['sh_dict'][ab_class]))
 				box_labels.append(ab_class)
 
 		plt.figure(num=None, figsize=(7, 5), dpi=80)
@@ -398,23 +414,21 @@ class Rep_seq:
 		plt.ylabel('Somatic Hypermutations', fontsize=15)
 
 
-
-
-		######## Plot Ab type fractions #############
-
-		bar_plt(self.ABtype_fractions, 'Fraction of reads', 'AB type Read Fractions')
-		bar_plt(self.ABtype_unique, 'Fraction of unique clones', 'AB type Fraction of Unique Clones', color="#F08080")
+		## Plot Ab type fractions ###
+		bar_plt(self.features['ABtype_fractions'], 'Fraction of reads', 'AB type Read Fractions')
+		bar_plt(self.features['ABtype_unique'], 'Fraction of unique clones', 'AB type Fraction of Unique Clones', color="#F08080")
 
 		#print clone fraction distributions
-		clone_fractions = OrderedDict([('top clone', self.top_clone_fraction), \
-							('top 10 clones', self.top_10_fraction), \
-							('top 100 clones', self.top_100_fraction)])
+
+		clone_fractions = OrderedDict([('top clone', self.features['top_clone_fraction']), \
+							('top 10 clones', self.features['top_10_fraction']), \
+							('top 100 clones', self.features['top_100_fraction'])])
 
 		bar_plt(clone_fractions, 'Fraction of total reads', 'Fractions of Repertoire for Top Clones')
 
 		# plot cumulative clone fractions
 		plt.figure(num=None, figsize=(7, 5), dpi=80)
-		plt.plot(np.array(self.clone_distribution).cumsum())
+		plt.plot(np.array(self.features['clone_distribution']).cumsum())
 		plt.xlabel('Top Clones (in percentage)', fontsize=15)
 		plt.ylabel('Cumulative Fraction of Reads',fontsize=15)
 
@@ -433,7 +447,7 @@ class Rep_seq:
 		if f4:
 			data = self.f4VJ_freqs
 		else:
-			data = self.VJ_freqs
+			data = self.features['VJ_freqs']
 
 		plt.bar(range(len(data)), data.values(), align='center')
 		plt.xticks(range(len(data)), data.keys(), rotation=90)
@@ -448,15 +462,24 @@ class Rep_seq:
 
 	def plot_VJ_fractions(self, f4=False):
 		if f4:
-			data = self.f4VJ_fractions
+			data = self.features['f4V_fractions']
 		else:
-			data = self.VJ_fractions
+			data = self.features['VJ_fractions']
 
 		plt.bar(range(len(data)), data.values(), align='center')
 		plt.xticks(range(len(data)), data.keys(), rotation=90)
 		plt.xlabel('VJ-Germlines')
 		plt.ylabel('Fraction of Repertoire')
-		plt.show()		
+		plt.show()
+
+
+
+
+	def output_features(self,outpath):
+		import json
+		outfile=open(outpath)
+		json.dump(self.features,outfile,indent=1,sort_keys=True)
+
 
 
 

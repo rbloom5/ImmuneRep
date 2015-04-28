@@ -9,6 +9,7 @@ import itertools
 import matplotlib.pyplot as plt
 
 
+import Rep_sequence_analysis
+from Rep_sequence_analysis import *
 
-# from .Rep_sequence_analysis import Clone, Cluster, Rep_seq
 

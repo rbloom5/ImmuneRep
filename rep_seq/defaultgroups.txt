@@ -1,0 +1,8 @@
+{
+	"MS": ["PatientWithMS1",
+		"PatientWithMS2",
+		"PatientWithMS3"],
+	"NonMS": ["PatientWithoutMS1",
+		"PatientWithoutMS2",
+		"PatientWithoutMS3"]
+}

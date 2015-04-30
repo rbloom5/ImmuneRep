@@ -453,7 +453,7 @@ class Rep_seq:
 
 	def output_features(self,outpath):
 		import json
-		outfile=open(outpath)
+		outfile=open(outpath,'w')
 		json.dump(self.features,outfile,indent=1,sort_keys=True)
 
 

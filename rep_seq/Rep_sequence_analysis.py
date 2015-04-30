@@ -101,7 +101,7 @@ class Rep_seq:
 		#the clone (i.e. the clone that appears the most in the repertoire has the key '1')
 		#the object has the consensus cddr3 sequence, V, J, number of reads and percent of rep
 		#that this clone represents
-
+		print "Finding clones..."
 		clone_index = 1
 		germ_complete=0
 		All_clones = {}
@@ -110,7 +110,7 @@ class Rep_seq:
 
 
 		if parallel:
-			num_cores = multiprocessing.cpu_count()
+			num_cores = multiprocessing.cpu_count()/4
 			pool = Pool(processes=num_cores)
 
 
@@ -226,6 +226,7 @@ class Rep_seq:
 		os.system("mkdir "+dirstring)
 		file_list = []
 		# make fasta file for all clones in each VJ pair
+		print "writing files for tree creation"
 		for germ in self.Clones_split_by_VJ:
 			filestring = dirstring+'/immTree_'+germ+'.fasta'
 			file_list.append(filestring)
@@ -235,13 +236,8 @@ class Rep_seq:
 					find_and_write(best_id, f, self.filepath[0])
 
 
-		# This function just makes running bash commands (below) easier
-		def bash(cmd):
-			process = subprocess.Popen(cmd.split(),stdout=subprocess.PIPE)
-			output = process.communicate()[0]
-			return output
-
 		# set up a parallell processing pool
+		num_cores = multiprocessing.cpu_count()/4
 		pool = Pool(processes=num_cores)
 		nIter = 300 #should do 300+ for large repertoires
 		fstrings_for_pool=[]
@@ -254,11 +250,15 @@ class Rep_seq:
 		for f in file_list:
 			fstrings_for_pool.append(matlab_call + f + ' %s'%nIter)
 
-		#run immunitree on all cores, the .node files are stored at 
-		results = pool.map(bash, fstrings_for_pool)
+		#run immunitree on all cores, the .node files are stored in S3 
+		print "Running Immunitree.  This may take a while..."
+		try:
+			results = pool.map(os.system, fstrings_for_pool)
+		except:
+			pass
 
 		#delete all the temp vj-files
-		bash('sudo rm -f %s'%dirstring)
+		os.system('sudo rm -f -r %s'%dirstring)
 
 
 
@@ -346,7 +346,7 @@ class Rep_seq:
 
 		for clone in self.Clones:  #is reads or clones better?
 			sh_dict['all classes'].append(self.Clones[clone].sh)
-			if self.Clones[clone].ABtype:
+			if self.Clones[clone].ABtype and self.Clones[clone].ABtype in sh_dict:
 				sh_dict[self.Clones[clone].ABtype].append(self.Clones[clone].sh)
 
 		self.features['sh_dict'] = sh_dict
@@ -377,11 +377,10 @@ class Rep_seq:
 
 	def plots(self):
 
-		##################################
-		           # PLOTS # 
-		##################################
 		plt.rc('xtick', labelsize=15) 
 		plt.rc('ytick', labelsize=15)
+
+
 
 		#### Make histograms for all classes #####
 		try:
@@ -414,11 +413,16 @@ class Rep_seq:
 		plt.ylabel('Somatic Hypermutations', fontsize=15)
 
 
-		## Plot Ab type fractions ###
+
+
+		######## Plot Ab type fractions #############
 		bar_plt(self.features['ABtype_fractions'], 'Fraction of reads', 'AB type Read Fractions')
 		bar_plt(self.features['ABtype_unique'], 'Fraction of unique clones', 'AB type Fraction of Unique Clones', color="#F08080")
 
-		#print clone fraction distributions
+
+
+
+		######## Plot clone fraction distributions ##########
 
 		clone_fractions = OrderedDict([('top clone', self.features['top_clone_fraction']), \
 							('top 10 clones', self.features['top_10_fraction']), \
@@ -426,7 +430,9 @@ class Rep_seq:
 
 		bar_plt(clone_fractions, 'Fraction of total reads', 'Fractions of Repertoire for Top Clones')
 
-		# plot cumulative clone fractions
+
+
+		######## Plot cumulative clone fractions ########
 		plt.figure(num=None, figsize=(7, 5), dpi=80)
 		plt.plot(np.array(self.features['clone_distribution']).cumsum())
 		plt.xlabel('Top Clones (in percentage)', fontsize=15)
@@ -477,7 +483,7 @@ class Rep_seq:
 
 	def output_features(self,outpath):
 		import json
-		outfile=open(outpath)
+		outfile=open(outpath,'wb')
 		json.dump(self.features,outfile,indent=1,sort_keys=True)
 
 

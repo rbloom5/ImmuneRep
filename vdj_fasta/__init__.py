@@ -1,3 +1,3 @@
 #!/usr/bin/python
 
-from multiprocess-vdj import all
+from multiprocess_vdj import *

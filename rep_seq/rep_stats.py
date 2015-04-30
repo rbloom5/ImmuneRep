@@ -2,7 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
+#import seaborn as sns
 
 def find_distribution(clones,num_chunks, num_clones,num_Reads):
 	n = num_chunks 
@@ -22,7 +22,7 @@ def find_distribution(clones,num_chunks, num_clones,num_Reads):
 			clone_fractions.append(sum_reads/float(num_Reads))
 	else:
 		for cl in clones:
-			clone_fractions.append(Clones[cl].num_reads/float(num_Reads))
+			clone_fractions.append(clones[cl].num_reads/float(num_Reads))
 
 	return clone_fractions
 
@@ -34,14 +34,14 @@ def top_clone_fractions(clones, num_Reads):
 
 	top_clone = clones[1].num_reads/float(num_Reads)
 
-	if clones[10]:
+	if len(clones)>=10:
 		sum_reads = 0
 		for i in range(10):
 			sum_reads+=clones[i+1].num_reads
 
 		top_10 = sum_reads/float(num_Reads)
 
-	if clones[100]:
+	if len(clones)>=100:
 		sum_reads = 0
 		for i in range(100):
 			sum_reads+=clones[i+1].num_reads
@@ -57,7 +57,7 @@ def ABtype_fractions(clones, num_clones, num_Reads):
 	AB_counts = {'IGHM': 0, 'IGHG': 0, 'IGHA': 0, 'IGHE': 0, 'IGHD':0}
 	AB_unique_counts = {'IGHM': 0, 'IGHG': 0, 'IGHA': 0, 'IGHE': 0, 'IGHD':0}
 	for cl in clones:
-		if clones[cl].ABtype:
+		if clones[cl].ABtype and clones[cl].ABtype in AB_counts:
 			AB_counts[clones[cl].ABtype]+=clones[cl].num_reads
 			AB_unique_counts[clones[cl].ABtype]+=1
 

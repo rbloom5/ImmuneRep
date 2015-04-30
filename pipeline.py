@@ -51,9 +51,9 @@ def pipeline(runs):
 
 		
 		#Run VDJFasta
-		print('Running VDJFasta on '+r+'...')
-		cmd = ['perl', cwd + '/external_lib/vdjfasta/bin/fasta-vdj-pipeline.pl', "--file="+fasta_name, "--verbose=1"]
-		subprocess.call(cmd)
+		# print('Running VDJFasta on '+r+'...')
+		# cmd = ['perl', cwd + '/external_lib/vdjfasta/bin/fasta-vdj-pipeline.pl', "--file="+fasta_name, "--verbose=1"]
+		# subprocess.call(cmd)
 
-pipeline('SRR1298742')
+pipeline(['SRR1383470'])
 

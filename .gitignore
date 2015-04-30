@@ -8,3 +8,4 @@
 *.ipynb
 *.csv
 0
+./ipynb_checkpoints

@@ -28,7 +28,8 @@ class Experiment:
 		    for i, sample in enumerate(group['samples']):
 		        self.color_dict[sample] = color[i]
 
-	def SHM_dict(self):	#Creates dictionary of the SHM counts - ELIMINATE THIS!!!!!
+		#Creates a dict of dicts with the following structure SHM_dict[antibody class][group name][sample name] and the resulting 
+		#object is a list with the number of somatic hyper mutations 
 		antibody_class_list = ['all classes', 'IGHM', 'IGHG', 'IGHA', 'IGHE', 'IGHD']
 
 		SHM_dict = {}
@@ -41,9 +42,9 @@ class Experiment:
 
 		self.SHM_dict = SHM_dict
 
-	def SHM_DF(self):	#Creates SHM Pandas DataFrame
-		antibody_class_list = ['all classes', 'IGHM', 'IGHG', 'IGHA', 'IGHE', 'IGHD']
-		Columns = ['Antibody', 'Group', 'Sample', 'Data']
+		#Creates two Pandas DataFrames with the columsn [Antibody  Group  Sample  Data]. The first repersents the data column as a list of
+		#somatic hypermutations. The second creates a new row for every SHM.
+		SHM_columns = ['Antibody', 'Group', 'Sample', 'Data']
 
 		ls_split = []
 		ls = []
@@ -53,14 +54,14 @@ class Experiment:
 					ls.append([key, group['name'], sample, self.groups[igroup]['sample data'][sample]['sh_dict'][key]])
 					for i in self.groups[igroup]['sample data'][sample]['sh_dict'][key]:
 						ls_split.append([key, group['name'], sample, i])
-		DF_split = pd.DataFrame(ls_split, columns = Columns)
-		DF = pd.DataFrame(ls, columns = Columns)
+		DF_split = pd.DataFrame(ls_split, columns = SHM_columns)
+		DF = pd.DataFrame(ls, columns = SHM_columns)
 
-		self.SHM_df = DF
-		self.SHM_df_split = DF_split
+		self.SHM_DF = DF
+		self.SHM_DF_split = DF_split
 
-	def Clone_DF(self):
-		columns = ['Group', 'Sample', 'Top 1', 'Top 10', 'Top 100']
+		#Creates a Panda DataFrame for the clone information. The columns are [Group  Sample  Top 1  Top 10  Top 100]
+		Clone_columns = ['Group', 'Sample', 'Top 1', 'Top 10', 'Top 100']
 
 		ls = []
 		for igroup, group in enumerate(self.groups):
@@ -71,9 +72,9 @@ class Experiment:
 		        
 		        ls.append([group['name'], sample, top, top_10, top_100])
 		        
-		self.Clone_DF = pd.DataFrame(ls, columns=columns)
+		self.Clone_DF = pd.DataFrame(ls, columns=Clone_columns)
 
-	def violins(self): #SHIFT THIS TO DATAFRAME
+	def violins(self): #SHIFT THIS TO DATAFRAME and change the coloring on this
 
 		bins = np.linspace(0, 50, 50+1)
 
@@ -104,3 +105,7 @@ class Experiment:
 				print "There wasn't enough data for %s in %s" % (no_clones, key)
 
 	#def SHM_density(self):
+
+	def clone_bars(self):
+
+		self.Clone_DF.plot(kind='bar', stacked='True');

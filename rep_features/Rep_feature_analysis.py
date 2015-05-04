@@ -37,11 +37,3 @@ def update_rep_stats(reps = default):
 		
 		with open(outpath,'wb') as outfile:
 			json.dump(self.features_dict,outfile,indent=1,sort_keys=True)
-
-
-
-
-
-
-
-

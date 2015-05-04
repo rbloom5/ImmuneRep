@@ -11,6 +11,7 @@ from joblib import Parallel, delayed
 import multiprocessing
 from multiprocessing import Pool, freeze_support
 from collections import OrderedDict
+from ete2 import Tree
 
 
 
@@ -260,8 +261,19 @@ class Rep_seq:
 		#delete all the temp vj-files
 		os.system('sudo rm -f -r %s'%dirstring)
 
+		#This section creates a dict where the key is the VJ pair (seperated by _) and the object has the 
+		#ete2 tree structure. Each node in the tree structure has associated with it; a name, size, mutations from parent, and
+		#a SEQ object. The second dict is identical to the first, it just has the leaves removed
+		self.features['tree_dict'] = {}
+		self.features['pruned_tree_dict'] ={}
 
+		sample_name = self.filepath.split('/')[-1].split('.')[0]
 
+		for entry in glob.glob('/home/ubuntu/tree_output/'sample_name'/*.node.txt'):
+			VJ_name = '_'.join(entry.split('.')[0].split('_')[1:3])
+			self.features['tree_dict'][VJ_name] = convert_immunitree_to_ete2(entry)
+			self.features['pruned_tree_dict'][VJ_name] = convert_immunitree_to_ete2(entry)
+			for leaf in self.features['pruned_tree_dict'][VJ_name].get_leaves(): leaf.detach()
 
 
 	def find_clusters(self):

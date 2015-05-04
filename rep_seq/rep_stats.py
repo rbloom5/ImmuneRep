@@ -3,6 +3,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 #import seaborn as sns
+from ete2 import Tree
+from Bio.Seq import Seq
+from Bio.Alphabet import generic_dna
 
 def find_distribution(clones,num_chunks, num_clones,num_Reads):
 	n = num_chunks 
@@ -110,7 +113,24 @@ def bar_plt(data, ylabel, title, color=None):
     plt.title(title, fontsize=20)
     plt.show()
 
+def convert_immunitree_to_ete2(filepath):
 
+    DataIn = np.loadtxt(filepath, dtype='string', delimiter=', ', skiprows=1 )
+
+    node_dict = {}
+
+    for row in DataIn:
+        name_string = 'node_'+ row[0]
+
+        if row[1] == '0':
+            node_dict[name_string] = Tree(name=name_string)
+        else:
+            parent = node_dict['node_'+ row[1]]
+            node_dict[name_string] = parent.add_child(name=name_string)
+
+        node_dict[name_string].add_features(node_size=int(row[2]), mutations=row[4], sequence=Seq(row[5], generic_dna))
+
+    return node_dict['node_1']
 
 
 

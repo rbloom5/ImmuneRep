@@ -1,5 +1,5 @@
 #!/usr/bin/python
-
+import json
 
 from rep_stat_functions import *
 
@@ -34,7 +34,7 @@ def update_rep_stats(reps = default):
 
 
 		# once we run through everything, dump the updated features dict into a new json
-		import json
+		
 		with open(outpath,'wb') as outfile:
 			json.dump(self.features_dict,outfile,indent=1,sort_keys=True)
 

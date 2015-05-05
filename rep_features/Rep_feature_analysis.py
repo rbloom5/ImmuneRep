@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import json
+import pickle
 
 from rep_stat_functions import *
 
@@ -15,15 +16,16 @@ def update_rep_stats(reps = default):
 	#run through each rep, load it in, update features dict with any new features, and dump it into a new json
 
 	for rep in reps:
-		features_dict = load rep json
-		Rep = load rep Rep_seq_object
+		features_dict = json.load()!!!!!!
+		with open(rep, 'wb') as rep:
+			Rep = pickle.load(rep)
 
 
 		## now loop through all of our functions and see if it is in the json
 		## if not, then calculate it
 
-		if feature_name not in features_dict:
-			features_dict[feature_name] = function_that_calculates_feature(Rep) #function stored in rep_stat_functions
+		if "Full_Tree_Size" not in features_dict:
+			features_dict["Full_Tree_Size"] = calculate_tree_size(Rep, pruned=False) #function stored in rep_stat_functions
 		
 
 		if other_feature_name not in features_dict:

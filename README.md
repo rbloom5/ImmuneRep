@@ -10,7 +10,7 @@ numpy,
 Biopython,
 seaborn,
 ete,
-aws command line tools,
+aws command line tools (pip install awscli),
 pandas,
 
 

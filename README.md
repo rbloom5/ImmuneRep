@@ -9,6 +9,10 @@ sklearn,
 numpy,
 Biopython,
 seaborn,
+ete,
+aws command line tools,
+pandas,
+
 
 all of which can be obtained through pip/easy-install etc.  
 

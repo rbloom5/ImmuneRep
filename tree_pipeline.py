@@ -5,6 +5,7 @@ from vdj_fasta import multiprocess_vdj
 
 import rep_seq
 from rep_seq import Rep_sequence_analysis
+# import Rep_sequence_analysis.Rep_seq
 
 import subprocess
 import time
@@ -36,14 +37,10 @@ def bash(cmd):
 ### SET OPTIONS AND INPUTS ##
 #############################
 
-fileIDs = [	\
-			# 'SRR1298742',\
-			# 'SRR1383448',\
-			'SRR1383466',\
-			'SRR1383453',\
-			'SRR1383472',\
-			'SRR1383450',\
-			'SRR1383455',\
+fileIDs = [	#'SRR1383453',\
+			#'SRR1383472',\
+			#'SRR1383450',\
+			#'SRR1383455',\
 			'SRR1383466',\
 			'SRR1383470',\
 			'SRR1383476',\
@@ -66,39 +63,32 @@ plots = False #if you are running on a local machine and want to see plots - set
 #run_vdjfasta(fileIDs, num_sequences)
 
 # load in vdj-fasta output and pull out features using rep-seq
-ext = '.VDJ.H3.L3.CH1.fa'
-s3_dir = 's3://vdjfasta-output/'
+ext = '.pkl'
+s3_dir = 's3://rep-seq-objects/'
+
+ext1 = '.VDJ.H3.L3.CH1.fa'
+s3_dir1 = 's3://vdjfasta-output/'
 counter = 0
 
 for f in fileIDs:
 	start = time.time()
 	print "started processing", f
 	f_string = s3_dir + f + ext
+	f_string1 = s3_dir1 + f + ext1
 
 	#copy from s3 to local
+	bash('aws s3 cp %s /home/ubuntu/tempvdj/%s'%(f_string1,f+ext1))
 	bash('aws s3 cp %s /home/ubuntu/tempvdj/%s'%(f_string,f+ext))
-	bash('aws s3 cp s3://tree-output/'+f+'/' ' /home/ubuntu/tree_output/ --recursive')
 
-	# # use rep seq to get all properties
+	# use rep seq to get all properties
+	with open('/home/ubuntu/tempvdj/%s'%f+ext) as pk:
+		Rep = pickle.load(pk)
 
-	Rep = Rep_sequence_analysis.Rep_seq(['/home/ubuntu/tempvdj/'+f+ext],num=num_sequences)
-	Rep.find_clones(parallel=True)
-	print "calculating statistics..."
-	Rep.get_stats()
+	
 	Rep.tree()
-	if plots:
-		Rep.plots()
+
 
 	#output features and Rep-seq object to files
-	print "saving features to json..."
-	Rep.output_features('/home/ubuntu/tempvdj/'+f+'.json')
-	with open('/home/ubuntu/tempvdj/'+f+'.pkl', 'wb') as output:
-		pickle.dump(Rep, output, pickle.HIGHEST_PROTOCOL)
-
-	#Copy all files to the appropriate folder in s3
-	print "copying files to s3"
-	bash('aws s3 cp /home/ubuntu/tempvdj/'+f+'.json s3://rep-seq-jsons/')
-	bash('aws s3 cp /home/ubuntu/tempvdj/'+f+'.pkl s3://rep-seq-objects/')
 
 	
 	node_files = [i for i in os.listdir('/home/ubuntu/tree_output') if i.endswith('.fasta.node.txt')]

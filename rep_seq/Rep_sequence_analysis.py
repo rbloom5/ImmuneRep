@@ -12,6 +12,7 @@ import multiprocessing
 from multiprocessing import Pool, freeze_support
 from collections import OrderedDict
 from ete2 import Tree
+import glob
 
 
 
@@ -126,6 +127,9 @@ class Rep_seq:
 			for item in ind_Clones_split_by_VJ:
 				Clones_split_by_VJ[item.keys()[0]] = item[item.keys()[0]]
 
+			pool.close()
+			pool.join()
+
 
 		else:
 			for germ in self.Reads_split_by_VJ:
@@ -222,58 +226,60 @@ class Rep_seq:
 
 
 		#make somewhat descriptive directory and file names
-		head, tail = os.path.split(self.filepath[0])
-		dirstring = tail.split('.')[0]+'_vj_files'
-		os.system("mkdir "+dirstring)
-		file_list = []
-		# make fasta file for all clones in each VJ pair
-		print "writing files for tree creation"
-		for germ in self.Clones_split_by_VJ:
-			filestring = dirstring+'/immTree_'+germ+'.fasta'
-			file_list.append(filestring)
-			with open(filestring, 'w') as f:
-				for clone in self.Clones_split_by_VJ[germ]:
-					best_id = find_best_id(self.Clones_split_by_VJ[germ][clone], self.Reads_split_by_VJ[germ])
-					find_and_write(best_id, f, self.filepath[0])
+		# head, tail = os.path.split(self.filepath[0])
+		# dirstring = tail.split('.')[0]+'_vj_files'
+		# os.system("mkdir "+dirstring)
+		# file_list = []
+		# # make fasta file for all clones in each VJ pair
+		# print "writing files for tree creation"
+		# for germ in self.Clones_split_by_VJ:
+		# 	filestring = dirstring+'/immTree_'+germ+'.fasta'
+		# 	file_list.append(filestring)
+		# 	with open(filestring, 'w') as f:
+		# 		for clone in self.Clones_split_by_VJ[germ]:
+		# 			best_id = find_best_id(self.Clones_split_by_VJ[germ][clone], self.Reads_split_by_VJ[germ])
+		# 			find_and_write(best_id, f, self.filepath[0])
 
 
-		# set up a parallell processing pool
-		num_cores = multiprocessing.cpu_count()/4
-		pool = Pool(processes=num_cores)
-		nIter = 300 #should do 300+ for large repertoires
-		fstrings_for_pool=[]
+		# # set up a parallell processing pool
+		# num_cores = multiprocessing.cpu_count()/4
+		# pool = Pool(processes=num_cores)
+		# nIter = 300 #should do 300+ for large repertoires
+		# fstrings_for_pool=[]
 
-		matlab_call = '/home/ubuntu/imm_tree_test/run_run_immunitree.sh \
-						/usr/local/MATLAB/MATLAB_Compiler_Runtime/v83/ '
-						#/home/ubuntu/SRR1383448_vj_files/immTree_IGHV1-2_IGHJ4.fasta 50'
+		# matlab_call = '/home/ubuntu/imm_tree_test/run_run_immunitree.sh \
+		# 				/usr/local/MATLAB/MATLAB_Compiler_Runtime/v83/ '
+		# 				#/home/ubuntu/SRR1383448_vj_files/immTree_IGHV1-2_IGHJ4.fasta 50'
 
-		#make list of all the bash calls (one for each VJ file we input to immunitree)
-		for f in file_list:
-			fstrings_for_pool.append(matlab_call + f + ' %s'%nIter)
+		# #make list of all the bash calls (one for each VJ file we input to immunitree)
+		# for f in file_list:
+		# 	fstrings_for_pool.append(matlab_call + f + ' %s'%nIter)
 
-		#run immunitree on all cores, the .node files are stored in S3 
-		print "Running Immunitree.  This may take a while..."
-		try:
-			results = pool.map(os.system, fstrings_for_pool)
-		except:
-			pass
+		# #run immunitree on all cores, the .node files are stored in S3 
+		# print "Running Immunitree.  This may take a while..."
+		# try:
+		# 	results = pool.map(os.system, fstrings_for_pool)
+		# except:
+		# 	pass
 
-		#delete all the temp vj-files
-		os.system('sudo rm -f -r %s'%dirstring)
+		# pool.close()
+		# pool.join()
+		# #delete all the temp vj-files
+		# os.system('sudo rm -f -r %s'%dirstring)
 
-		#This section creates a dict where the key is the VJ pair (seperated by _) and the object has the 
-		#ete2 tree structure. Each node in the tree structure has associated with it; a name, size, mutations from parent, and
-		#a SEQ object. The second dict is identical to the first, it just has the leaves removed
-		self.features['tree_dict'] = {}
-		self.features['pruned_tree_dict'] ={}
+		# This section creates a dict where the key is the VJ pair (seperated by _) and the object has the 
+		# ete2 tree structure. Each node in the tree structure has associated with it; a name, size, mutations from parent, and
+		# a SEQ object. The second dict is identical to the first, it just has the leaves removed
+		self.tree_dict = {}
+		self.pruned_tree_dict ={}
 
-		sample_name = self.filepath.split('/')[-1].split('.')[0]
+		sample_name = self.filepath[0].split('/')[-1].split('.')[0]
 
-		for entry in glob.glob('/home/ubuntu/tree_output/'sample_name'/*.node.txt'):
+		for entry in glob.glob('/home/ubuntu/tree_output/'+sample_name+'/*.node.txt'):
 			VJ_name = '_'.join(entry.split('.')[0].split('_')[1:3])
-			self.features['tree_dict'][VJ_name] = convert_immunitree_to_ete2(entry)
-			self.features['pruned_tree_dict'][VJ_name] = convert_immunitree_to_ete2(entry)
-			for leaf in self.features['pruned_tree_dict'][VJ_name].get_leaves(): leaf.detach()
+			self.tree_dict[VJ_name] = convert_immunitree_to_ete2(entry)
+			self.pruned_tree_dict[VJ_name] = convert_immunitree_to_ete2(entry)
+			for leaf in self.pruned_tree_dict[VJ_name].get_leaves(): leaf.detach()
 
 
 	def find_clusters(self):

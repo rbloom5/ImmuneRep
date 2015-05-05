@@ -36,8 +36,12 @@ def bash(cmd):
 ### SET OPTIONS AND INPUTS ##
 #############################
 
-fileIDs = [	#'SRR1383453',\
-			#'SRR1383472',\
+fileIDs = [	\
+			# 'SRR1298742',\
+			# 'SRR1383448',\
+			'SRR1383466',\
+			'SRR1383453',\
+			'SRR1383472',\
 			'SRR1383450',\
 			'SRR1383455',\
 			'SRR1383466',\
@@ -73,8 +77,10 @@ for f in fileIDs:
 
 	#copy from s3 to local
 	bash('aws s3 cp %s /home/ubuntu/tempvdj/%s'%(f_string,f+ext))
+	bash('aws s3 cp s3://tree-output/'+f+'/' ' /home/ubuntu/tree_output/ --recursive')
 
-	# use rep seq to get all properties
+	# # use rep seq to get all properties
+
 	Rep = Rep_sequence_analysis.Rep_seq(['/home/ubuntu/tempvdj/'+f+ext],num=num_sequences)
 	Rep.find_clones(parallel=True)
 	print "calculating statistics..."

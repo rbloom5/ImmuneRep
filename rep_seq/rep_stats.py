@@ -113,6 +113,9 @@ def bar_plt(data, ylabel, title, color=None):
     plt.title(title, fontsize=20)
     plt.show()
 
+
+
+
 def convert_immunitree_to_ete2(filepath):
 
     DataIn = np.loadtxt(filepath, dtype='string', delimiter=', ', skiprows=1 )

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import numpy
 from ete2 import Tree
-from pandas import *
+import pandas as pd
 
 
 
@@ -19,15 +19,15 @@ def Make_VJ_Matrix():
 
     J_names = ['IGHJ1','IGHJ2','IGHJ3','IGHJ4','IGHJ5','IGHJ6']
 
-    return DataFrame(np.zeros((len(V_names),len(J_names))),index=V_names,columns=J_names)
+    return pd.DataFrame(np.zeros((len(V_names),len(J_names))),index=V_names,columns=J_names)
 
 def calculate_tree_size(rep_obj):
 
 	tree_size_DF = Make_VJ_Matrix()
 
 	for vj_pair in rep_obj.tree_dict:
-		V = vj_pair.split('_').[0]
-		J = vj_pair.split('_').[1]
+		V = vj_pair.split('_')[0]
+		J = vj_pair.split('_')[1]
 
 		tree_size_DF[J].loc[V] = len(rep_obj.tree_dict[vj_pair].get_descendants())
 
@@ -46,3 +46,9 @@ def calculate_something_else(Rep):
 	# calculate something else useful
 
 	return 'the other useful thing'
+
+
+
+
+
+

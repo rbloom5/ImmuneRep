@@ -51,23 +51,24 @@ class Experiment:
 				for sample in group['samples']:
 					SHM_data = self.groups[igroup]['sample data'][sample]['sh_dict'][key]
 					ls.append([key, group['name'], sample, SHM_data])
-					#self.SHM_DF = [key, group['name'], sample, 'error']
-					#self.SHM_DF['Data'].loc[sample] = SHM_data
 
 		self.SHM_DF = pd.DataFrame(ls, columns = SHM_columns)
 
-		#Creates a Panda DataFrame for the clone information. The columns are [Group  Top 1  Top 10  Top 100]
-		Clone_columns = ['Group', 'Top 1', 'Top 10', 'Top 100']
+		#self.SHM_DF.set_index('Sample')
 
-		self.clone_DF = pd.DataFrame(columns=Clone_columns)
+		#Creates a Panda DataFrame for the clone information. The columns are [Group  Sample  Top 1  Top 10  Top 100]
+		Clone_columns = ['Group', 'Sample', 'Top 1', 'Top 10', 'Top 100']
 
+		clone_ls = []
 		for igroup, group in enumerate(self.groups):
 		    for sample in group['samples']:
 		        top = self.groups[igroup]['sample data'][sample]['top_clone_fraction']
 		        top_10 = self.groups[igroup]['sample data'][sample]['top_10_fraction']
 		        top_100 = self.groups[igroup]['sample data'][sample]['top_100_fraction']
 		        
-		        self.clone_DF.loc[sample] = [group['name'], top, top_10, top_100]
+		        clone_ls.append([group['name'], sample, top, top_10, top_100])
+
+		self.clone_DF = pd.DataFrame(clone_ls, columns=Clone_columns)
 		        
 
 	def violins(self): #SHIFT THIS TO DATAFRAME and change the coloring on this

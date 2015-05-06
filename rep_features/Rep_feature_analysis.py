@@ -20,7 +20,7 @@ def update_rep_stats(reps = 'default'):
 		json_buck = conn.get_bucket('rep-seq-jsons')
 		obj_buck = conn.get_bucket('rep-seq-objects')
 		json_names = [str(key.name) for key in json_buck.list()]
-		object_names = [str(key.name) for key in obj_buck.list()]
+
 
 
 	# The jsons are small, so just download them all at once

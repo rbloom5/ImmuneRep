@@ -21,15 +21,18 @@ def Make_VJ_Matrix():
 
     return DataFrame(np.zeros((len(V_names),len(J_names))),index=V_names,columns=J_names)
 
-def calculate_tree_size(rep_obj):
+def calculate_tree_size(rep_obj, pruned=False):
+
+	if pruned=False: dictionary = rep_obj.tree_dict
+	if pruned=True: dictionary = rep_obj.pruned_tree_dict
 
 	tree_size_DF = Make_VJ_Matrix()
 
-	for vj_pair in rep_obj.tree_dict:
+	for vj_pair in dictionary:
 		V = vj_pair.split('_').[0]
 		J = vj_pair.split('_').[1]
 
-		tree_size_DF[J].loc[V] = len(rep_obj.tree_dict[vj_pair].get_descendants())
+		tree_size_DF[J].loc[V] = len(dictionary[vj_pair].get_descendants())
 
 	return tree_size_DF
 

@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import numpy
+import numpy as np
 from ete2 import Tree
 import pandas as pd
 
@@ -23,24 +23,21 @@ def Make_VJ_Matrix():
 
 def calculate_tree_size(rep_obj, pruned=False):
 
-	if pruned=False: dictionary = rep_obj.tree_dict
-	if pruned=True: dictionary = rep_obj.pruned_tree_dict
+	if pruned==False: dictionary = rep_obj.tree_dict
+	if pruned==True: dictionary = rep_obj.pruned_tree_dict
 
 	tree_size_DF = Make_VJ_Matrix()
 
-<<<<<<< HEAD
 	for vj_pair in rep_obj.tree_dict:
 		V = vj_pair.split('_')[0]
 		J = vj_pair.split('_')[1]
-=======
-	for vj_pair in dictionary:
-		V = vj_pair.split('_').[0]
-		J = vj_pair.split('_').[1]
->>>>>>> 656c6ca9e704fe4d1822a4b3d7a448387511de05
+
 
 		tree_size_DF[J].loc[V] = len(dictionary[vj_pair].get_descendants())
 
-	return tree_size_DF
+	tree_size_dict = tree_size_DF.to_dict()
+
+	return tree_size_dict
 
 
 def calculate_something(Rep):

@@ -40,20 +40,21 @@ class Experiment:
 		    for i, sample in enumerate(group['samples']):
 		        self.color_dict[sample] = color[i]
 
-		#Creates a Pandas DataFrame with the columns [Antibody  Group  Data], where the index is the sample name and Data is a list of
+		#Creates a Pandas DataFrame with the columns [Antibody  Group  Sample  Data], where the index is the sample name and Data is a list of
 		#number of somatic hypermutations
-		SHM_columns = ['Antibody', 'Group', 'Data']
+		SHM_columns = ['Antibody', 'Group', 'Sample', 'Data']
 		antibody_class_list = ['all classes', 'IGHM', 'IGHG', 'IGHA', 'IGHE', 'IGHD']
 
-		self.SHM_DF = pd.DataFrame(columns = SHM_columns)
-
+		ls = []
 		for key in antibody_class_list:
 			for igroup,group in enumerate(self.groups):
 				for sample in group['samples']:
 					SHM_data = self.groups[igroup]['sample data'][sample]['sh_dict'][key]
-					self.SHM_DF.loc[sample] = [key, group['name'], 'error']
-					self.SHM_DF['Data'].loc[sample] = SHM_data
+					ls.append([key, group['name'], sample, SHM_data])
+					#self.SHM_DF = [key, group['name'], sample, 'error']
+					#self.SHM_DF['Data'].loc[sample] = SHM_data
 
+		self.SHM_DF = pd.DataFrame(ls, columns = SHM_columns)
 
 		#Creates a Panda DataFrame for the clone information. The columns are [Group  Top 1  Top 10  Top 100]
 		Clone_columns = ['Group', 'Top 1', 'Top 10', 'Top 100']
@@ -132,3 +133,8 @@ class Experiment:
 		DF_split = pd.DataFrame(ls_split, columns = SHM_columns)
 
 		self.SHM_DF_split = DF_split
+
+	def SHM_factor_plots(self):
+
+		try: sns.factorplot('Sample', y='Data', hue='Group', data=self.SHM_DF_split, col='Antibody'); 	
+		except: print "run self.split_SHM_DF"

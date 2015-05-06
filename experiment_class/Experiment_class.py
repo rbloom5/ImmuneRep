@@ -3,9 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd 
+from boto.s3.connection import S3Connection
+from boto.s3.key import Key
 
 class Experiment:
-	def __init__(self,groups,datadir='',defaultgroupspath='defaultgroups.txt'):
+	def __init__(self,groups,defaultgroupspath='defaultgroups.txt'):
 		defaultgroups=json.load(open(defaultgroupspath)) 
 
 		#Checks for groups with no input samples and looks for a default
@@ -13,11 +15,21 @@ class Experiment:
 			if 'samples' not in group:
 				groups[igroup]['samples']=defaultgroups[group['name']]
 
+		#Downloads all the JSONs from AWS to the current directory
+		#dont share the strings below with anyone!
+		conn = S3Connection('AKIAJ2TEUHQV2LHU7XQQ','VKzoYINBlvZi5uiAIeAnJG5fgLedQPFrmMCpSfBp')
+		json_buck = conn.get_bucket('rep-seq-jsons')
+		json_names = [str(key.name) for key in json_buck.list()]
+
+		print "downloading jsons"
+		for key in json_buck.list():
+			key.get_contents_to_filename('tempJSONs/'+key.name)
+
 		#Pulls in the sample data for each sample
 		for igroup, group in enumerate(groups):
 			groups[igroup]['sample data'] = {}
 			for sample in group['samples']:
-				groups[igroup]['sample data'][sample]=json.load(open(datadir+'/'+sample+'.json'))
+				groups[igroup]['sample data'][sample]=json.load(open('tempJSONs/'+sample+'.json'))
 
 		self.groups = groups
 

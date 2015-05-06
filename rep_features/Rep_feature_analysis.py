@@ -10,7 +10,6 @@ sys.path.append(os.path.dirname(os.getcwd()))
 from rep_stats_functions import *
 
 
-
 def update_rep_stats(reps = 'default'):
 
 	if reps == 'default':
@@ -20,8 +19,6 @@ def update_rep_stats(reps = 'default'):
 		json_buck = conn.get_bucket('rep-seq-jsons')
 		obj_buck = conn.get_bucket('rep-seq-objects')
 		json_names = [str(key.name) for key in json_buck.list()]
-
-
 
 	# The jsons are small, so just download them all at once
 	print "downloading jsons"
@@ -47,7 +44,12 @@ def update_rep_stats(reps = 'default'):
 		## if not, then calculate it
 
 		if "Full_Tree_Size" not in features_dict:
-			features_dict["Full_Tree_Size"] = calculate_tree_size(Rep, pruned=False) #function stored in rep_stat_functions
+			features_dict["Full_Tree_Size"] = calculate_tree_size(Rep, pruned=False)
+
+
+		if "Pruned_Tree_Size" not in features_dict:
+			features_dict["Pruned_Tree_Size"] = calculate_tree_size(Rep, pruned=True)
+		
 		
 
 		# if other_feature_name not in features_dict:

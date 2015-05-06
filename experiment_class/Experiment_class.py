@@ -17,7 +17,7 @@ class Experiment:
 		for igroup, group in enumerate(groups):
 			groups[igroup]['sample data'] = {}
 			for sample in group['samples']:
-				groups[igroup]['sample data'][sample]=json.load(open(datadir+'/'+sample+'.txt'))
+				groups[igroup]['sample data'][sample]=json.load(open(datadir+'/'+sample+'.json'))
 
 		self.groups = groups
 
@@ -28,29 +28,25 @@ class Experiment:
 		    for i, sample in enumerate(group['samples']):
 		        self.color_dict[sample] = color[i]
 
-		#Creates two Pandas DataFrames with the columsn [Antibody  Group  Sample  Data]. The first repersents the data column as a list of
-		#somatic hypermutations. The second creates a new row for every SHM.
-		SHM_columns = ['Antibody', 'Group', 'Sample', 'Data']
+		#Creates a Pandas DataFrame with the columns [Antibody  Group  Data], where the index is the sample name and Data is a list of
+		#number of somatic hypermutations
+		SHM_columns = ['Antibody', 'Group', 'Data']
 		antibody_class_list = ['all classes', 'IGHM', 'IGHG', 'IGHA', 'IGHE', 'IGHD']
 
-		ls_split = []
-		ls = []
+		self.SHM_DF = pd.DataFrame(columns = SHM_columns)
+
 		for key in antibody_class_list:
 			for igroup,group in enumerate(self.groups):
 				for sample in group['samples']:
-					ls.append([key, group['name'], sample, self.groups[igroup]['sample data'][sample]['sh_dict'][key]])
-					for i in self.groups[igroup]['sample data'][sample]['sh_dict'][key]:
-						ls_split.append([key, group['name'], sample, i])
-		DF_split = pd.DataFrame(ls_split, columns = SHM_columns)
-		DF = pd.DataFrame(ls, columns = SHM_columns)
+					SHM_data = self.groups[igroup]['sample data'][sample]['sh_dict'][key]
+					self.SHM_DF.loc[sample] = [key, group['name'], 'error']
+					self.SHM_DF['Data'].loc[sample] = SHM_data
 
-		self.SHM_DF = DF
-		self.SHM_DF_split = DF_split
 
 		#Creates a Panda DataFrame for the clone information. The columns are [Group  Top 1  Top 10  Top 100]
 		Clone_columns = ['Group', 'Top 1', 'Top 10', 'Top 100']
 
-		self.Clone_DF = pd.DataFrame(columns=Clone_columns)
+		self.clone_DF = pd.DataFrame(columns=Clone_columns)
 
 		for igroup, group in enumerate(self.groups):
 		    for sample in group['samples']:
@@ -58,7 +54,7 @@ class Experiment:
 		        top_10 = self.groups[igroup]['sample data'][sample]['top_10_fraction']
 		        top_100 = self.groups[igroup]['sample data'][sample]['top_100_fraction']
 		        
-		        self.Clone_DF.loc[sample] = [group['name'], top, top_10, top_100]
+		        self.clone_DF.loc[sample] = [group['name'], top, top_10, top_100]
 		        
 
 	def violins(self): #SHIFT THIS TO DATAFRAME and change the coloring on this
@@ -109,4 +105,18 @@ class Experiment:
 
 	def clone_bars(self):
 
-		self.Clone_DF.plot(kind='bar', stacked='True');
+		self.clone_DF.plot(kind='bar', stacked='True');
+
+	def split_SHM_DF(self):
+		SHM_columns = ['Antibody', 'Group', 'Sample', 'Data']
+		antibody_class_list = ['all classes', 'IGHM', 'IGHG', 'IGHA', 'IGHE', 'IGHD']
+
+		ls_split = []
+		for key in antibody_class_list:
+			for igroup,group in enumerate(self.groups):
+				for sample in group['samples']:
+					for i in self.groups[igroup]['sample data'][sample]['sh_dict'][key]:
+						ls_split.append([key, group['name'], sample, i])
+		DF_split = pd.DataFrame(ls_split, columns = SHM_columns)
+
+		self.SHM_DF_split = DF_split

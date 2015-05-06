@@ -28,23 +28,10 @@ class Experiment:
 		    for i, sample in enumerate(group['samples']):
 		        self.color_dict[sample] = color[i]
 
-		#Creates a dict of dicts with the following structure SHM_dict[antibody class][group name][sample name] and the resulting 
-		#object is a list with the number of somatic hyper mutations 
-		antibody_class_list = ['all classes', 'IGHM', 'IGHG', 'IGHA', 'IGHE', 'IGHD']
-
-		SHM_dict = {}
-		for key in antibody_class_list:  
-		    SHM_dict[key] = {}
-		    for igroup,group in enumerate(self.groups):
-		        SHM_dict[key][group['name']] = {} 
-		        for sample in group['samples']:
-		            SHM_dict[key][group['name']][sample] = self.groups[igroup]['sample data'][sample]['sh_dict'][key]
-
-		self.SHM_dict = SHM_dict
-
 		#Creates two Pandas DataFrames with the columsn [Antibody  Group  Sample  Data]. The first repersents the data column as a list of
 		#somatic hypermutations. The second creates a new row for every SHM.
 		SHM_columns = ['Antibody', 'Group', 'Sample', 'Data']
+		antibody_class_list = ['all classes', 'IGHM', 'IGHG', 'IGHA', 'IGHE', 'IGHD']
 
 		ls_split = []
 		ls = []
@@ -60,21 +47,35 @@ class Experiment:
 		self.SHM_DF = DF
 		self.SHM_DF_split = DF_split
 
-		#Creates a Panda DataFrame for the clone information. The columns are [Group  Sample  Top 1  Top 10  Top 100]
-		Clone_columns = ['Group', 'Sample', 'Top 1', 'Top 10', 'Top 100']
+		#Creates a Panda DataFrame for the clone information. The columns are [Group  Top 1  Top 10  Top 100]
+		Clone_columns = ['Group', 'Top 1', 'Top 10', 'Top 100']
 
-		ls = []
+		self.Clone_DF = pd.DataFrame(columns=Clone_columns)
+
 		for igroup, group in enumerate(self.groups):
 		    for sample in group['samples']:
 		        top = self.groups[igroup]['sample data'][sample]['top_clone_fraction']
 		        top_10 = self.groups[igroup]['sample data'][sample]['top_10_fraction']
 		        top_100 = self.groups[igroup]['sample data'][sample]['top_100_fraction']
 		        
-		        ls.append([group['name'], sample, top, top_10, top_100])
+		        self.Clone_DF.loc[sample] = [group['name'], top, top_10, top_100]
 		        
-		self.Clone_DF = pd.DataFrame(ls, columns=Clone_columns)
 
 	def violins(self): #SHIFT THIS TO DATAFRAME and change the coloring on this
+
+		#Creates a dict of dicts with the following structure SHM_dict[antibody class][group name][sample name] and the resulting 
+		#object is a list with the number of somatic hyper mutations 
+		antibody_class_list = ['all classes', 'IGHM', 'IGHG', 'IGHA', 'IGHE', 'IGHD']
+
+		SHM_dict = {}
+		for key in antibody_class_list:  
+		    SHM_dict[key] = {}
+		    for igroup,group in enumerate(self.groups):
+		        SHM_dict[key][group['name']] = {} 
+		        for sample in group['samples']:
+		            SHM_dict[key][group['name']][sample] = self.groups[igroup]['sample data'][sample]['sh_dict'][key]
+
+		self.SHM_dict = SHM_dict
 
 		bins = np.linspace(0, 50, 50+1)
 

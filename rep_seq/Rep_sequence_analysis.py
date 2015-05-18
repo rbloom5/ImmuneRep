@@ -13,6 +13,7 @@ from multiprocessing import Pool, freeze_support
 from collections import OrderedDict
 from ete2 import Tree
 import glob
+import operator
 
 
 
@@ -45,8 +46,7 @@ except:
 # import ab_classes 
 # reload(ab_classes)
 from ab_classes import *
-
-       
+      
 
 class Rep_seq:
 
@@ -87,10 +87,10 @@ class Rep_seq:
 		self.Reads_split_by_f4V = v_first4_split(self.Reads)
 
 		self.f4V_freqs = {}
-		self.features['f4V_fractions'] = {}
+		self.features['f4VJ_fractions'] = {}
 		for germ in self.Reads_split_by_f4V:
 			self.f4V_freqs[germ] = len(self.Reads_split_by_f4V[germ])
-			self.features['f4V_fractions'][germ] = len(self.Reads_split_by_f4V[germ])/float(self.features['num_Reads'])
+			self.features['f4VJ_fractions'][germ] = len(self.Reads_split_by_f4V[germ])/float(self.features['num_Reads'])
 
 
 	def find_clones(self,parallel=False):
@@ -273,13 +273,14 @@ class Rep_seq:
 		self.tree_dict = {}
 		self.pruned_tree_dict ={}
 
-		sample_name = self.filepath[0].split('/')[-1].split('.')[0]
-
-		for entry in glob.glob('/home/ubuntu/tree_output/'+sample_name+'/*.node.txt'):
-			VJ_name = '_'.join(entry.split('.')[0].split('_')[1:3])
-			self.tree_dict[VJ_name] = convert_immunitree_to_ete2(entry)
-			self.pruned_tree_dict[VJ_name] = convert_immunitree_to_ete2(entry)
-			for leaf in self.pruned_tree_dict[VJ_name].get_leaves(): leaf.detach()
+		for entry in glob.glob('/home/ubuntu/tree_output/*.node.txt'):
+			try:
+				VJ_name = entry.split('/')[-1].split('.')[0][8:]
+				self.tree_dict[VJ_name] = convert_immunitree_to_ete2(entry)
+				self.pruned_tree_dict[VJ_name] = convert_immunitree_to_ete2(entry)
+				for leaf in self.pruned_tree_dict[VJ_name].get_leaves(): leaf.detach()
+			except:
+				continue
 
 
 	def find_clusters(self):
@@ -458,8 +459,9 @@ class Rep_seq:
 
 
 
-		#######  Plot VJ frequencies  ##########
-		self.plot_VJ_fractions()
+		#######  Plot VJ fractions for 10 most common VJ pairs ##########
+		self.plot_VJ_fractions(top_ten=True)
+		
 
 
 
@@ -467,16 +469,22 @@ class Rep_seq:
 
 
 
-	def plot_VJ_freqs(self, f4=False):
-		if f4:
-			data = self.f4VJ_freqs
+	def plot_VJ_freqs(self, f4=False, top_ten=False):
+		plt.figure(num=None, figsize=(7, 5), dpi=80)
+		plt.rc('xtick', labelsize=15) 
+		plt.rc('ytick', labelsize=15)
+
+		if top_ten:
+			data = dict(sorted(self.features['VJ_freqs'].iteritems(), key=operator.itemgetter(1), reverse=True)[:10])
+		elif f4:
+			data = self.features['f4VJ_freqs']
 		else:
 			data = self.features['VJ_freqs']
 
 		plt.bar(range(len(data)), data.values(), align='center')
 		plt.xticks(range(len(data)), data.keys(), rotation=90)
-		plt.xlabel('VJ-Germlines')
-		plt.ylabel('Reads')
+		plt.xlabel('VJ-Germlines', fontsize=15)
+		plt.ylabel('Reads',fontsize=15)
 		plt.show()
 
 
@@ -484,16 +492,22 @@ class Rep_seq:
 
 
 
-	def plot_VJ_fractions(self, f4=False):
-		if f4:
-			data = self.features['f4V_fractions']
+	def plot_VJ_fractions(self, f4=False, top_ten=False):
+		plt.figure(num=None, figsize=(7, 5), dpi=80)
+		plt.rc('xtick', labelsize=15) 
+		plt.rc('ytick', labelsize=15)
+
+		if top_ten:
+			data = dict(sorted(self.features['VJ_fractions'].iteritems(), key=operator.itemgetter(1), reverse=True)[:10])
+		elif f4:
+			data = self.features['f4VJ_fractions']
 		else:
 			data = self.features['VJ_fractions']
 
 		plt.bar(range(len(data)), data.values(), align='center')
 		plt.xticks(range(len(data)), data.keys(), rotation=90)
-		plt.xlabel('VJ-Germlines')
-		plt.ylabel('Fraction of Repertoire')
+		plt.xlabel('VJ-Germlines', fontsize=15)
+		plt.ylabel('Fraction of Repertoire', fontsize=15)
 		plt.show()
 
 

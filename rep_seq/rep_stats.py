@@ -2,7 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-#import seaborn as sns
+import seaborn as sns
 from ete2 import Tree
 from Bio.Seq import Seq
 from Bio.Alphabet import generic_dna
@@ -94,7 +94,7 @@ def sh_plots(data, label, color):
 		print "cannot plot %s, probably not enough clones, or seaborn is not imported"%label
 
 	plt.xlabel("Somatic Hypermutations", fontsize=15)
-	plt.ylabel("number of clones", fontsize=15) 
+	plt.ylabel("fraction of clones", fontsize=15) 
 	plt.legend([label],  fontsize=15)
 	plt.title(label, fontsize = 20)
 

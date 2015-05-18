@@ -4,24 +4,9 @@ import subprocess
 import re
 import json
 import time
+import multiprocessing
 
-#filenames=[
-#'SRR1383450',
-#'SRR1383455',
-#'SRR1383466',
-#'SRR1383470',]
-# 'SRR1383448',
-# 'SRR1383472',
-# 'SRR1383473',
-# 'SRR1383474']
-#'SRR747232',
-#'SRR747758',
-#'SRR747760',
-#'SRR747785',
-#'SRR747766',
-#'SRR747768',
-#'SRR765688']
-# filenames = ['SRR1383463']
+
 
 
 
@@ -29,6 +14,7 @@ def bash(cmd):
 	process = subprocess.Popen(cmd.split(),stdout=subprocess.PIPE)
 	output = process.communicate()[0]
 	return output
+
 
 def create_chunks(filenames, data_dir, reads = None):
     #filenames should not have .fasta extension - just SRR+numbers
@@ -123,7 +109,7 @@ def run_vdjfasta(filenames, reads=None):
               '.J.germdata.txt','.H3.acc.txt','.VDJ.H3.L3.CH1.fa',\
               '.wIgs.Vh-gs-Vk.c2m','.VDJ.coords.txt','.wIgs.fa','.aa.fa.1e-10.score.txt')
 
-	s3dir='patient_repertoire_data/'
+	s3dir='clean-repertoire-data/'
 	datadir='/home/ubuntu/data/'
 	Nmax=32
 
@@ -149,7 +135,7 @@ def run_vdjfasta(filenames, reads=None):
 			# cmd = 'rm '+datadir+filename+'.fastq'
 			# os.system(cmd)
 
-			cmd = 'aws s3 cp s3://'+s3dir+filename+'.fasta '+datadir+filename+'.fasta'
+			cmd = 'aws s3 cp s3://'+s3dir+filename+'.fasta '+datadir #+filename+'.fasta'
 			os.system(cmd)
 
 			# break into chunks

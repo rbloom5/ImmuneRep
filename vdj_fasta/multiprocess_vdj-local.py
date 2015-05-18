@@ -4,24 +4,10 @@ import subprocess
 import re
 import json
 import time
+import multiprocessing
+from multiprocessing import Pool, freeze_support
 
-#filenames=[
-#'SRR1383450',
-#'SRR1383455',
-#'SRR1383466',
-#'SRR1383470',]
-# 'SRR1383448',
-# 'SRR1383472',
-# 'SRR1383473',
-# 'SRR1383474']
-#'SRR747232',
-#'SRR747758',
-#'SRR747760',
-#'SRR747785',
-#'SRR747766',
-#'SRR747768',
-#'SRR765688']
-# filenames = ['SRR1383463']
+
 
 
 
@@ -30,7 +16,8 @@ def bash(cmd):
 	output = process.communicate()[0]
 	return output
 
-def create_chunks(filenames, data_dir):
+
+def create_chunks(filenames, data_dir, reads = None):
     #filenames should not have .fasta extension - just SRR+numbers
     #formatting inputs
     if data_dir[-1]!='/':
@@ -38,8 +25,12 @@ def create_chunks(filenames, data_dir):
     
     if not isinstance(filenames, list):
         filenames = [filenames]
-        
-        
+
+    if reads:
+    	max_out_files = reads/1000+1
+    else:
+    	max_out_files = 0
+  
         
     #list of all the filenames created    
     all_files = []
@@ -66,7 +57,7 @@ def create_chunks(filenames, data_dir):
                 if re.search('^>', line):
                     records+=1
                 
-                #if you get to 2500 records, close the old file, open up a new file and start writing to that
+                #if you get to 1000 records, close the old file, open up a new file and start writing to that
                 if records == 1000:
                     records = 0
                     out_files +=1
@@ -74,6 +65,8 @@ def create_chunks(filenames, data_dir):
                     out_file_string = data_dir + f + '_' + str(out_files)+'.fasta'
                     all_files.append(f + '_' + str(out_files))
                     out_handle = open(out_file_string, 'w+')
+                    if out_files == max_out_files:
+                    	return all_files
                 
                 
                 #write the line to the out file    
@@ -108,7 +101,7 @@ def humanize_time(secs):
     return '%02d:%02d:%02d' % (hours, mins, secs)
 
 
-def run_vdjfasta(filenames):
+def run_vdjfasta(filenames, reads=None):
 
 	extensions = ('.C.germdata.txt','.L1.acc.txt','.aa.fa','.wIgs.stock',\
               '.D.germdata.txt','.L2.acc.txt',\
@@ -117,13 +110,13 @@ def run_vdjfasta(filenames):
               '.J.germdata.txt','.H3.acc.txt','.VDJ.H3.L3.CH1.fa',\
               '.wIgs.Vh-gs-Vk.c2m','.VDJ.coords.txt','.wIgs.fa','.aa.fa.1e-10.score.txt')
 
-	s3dir='patient_repertoire_data/'
+	s3dir='clean-repertoire-data/'
 	datadir='/home/ubuntu/data/'
 	Nmax=32
 
 	runbase='sudo docker run -d -v /home/ubuntu/data:/home/data rzeller/vdj-process /home/vdjfasta/bin/fasta-vdj-pipeline.pl --file=/home/data/'
 
-	existre=re.compile(r'Error response from daemon: Cannot start container (.*): file exists')
+	# existre=re.compile(r'Error response from daemon: Cannot start container (.*): file exists')
 	processtime=time.time()
 	for filename in filenames:
 		try:
@@ -143,66 +136,24 @@ def run_vdjfasta(filenames):
 			# cmd = 'rm '+datadir+filename+'.fastq'
 			# os.system(cmd)
 
-			cmd = 'aws s3 cp s3://'+s3dir+filename+'.fasta '+datadir+filename+'.fasta'
+			cmd = 'aws s3 cp s3://'+s3dir+filename+'.fasta '+datadir #+filename+'.fasta'
 			os.system(cmd)
 
 			# break into chunks
-			chunknames=create_chunks(filename,datadir)
+			chunknames=create_chunks(filename,datadir, reads)
 			Nchunks=len(chunknames)
 
-			# initialize chunks status dictionary
-			chunks={}
-			for chunkname in chunknames:
-				chunks[chunkname]={'status':2}
+			vdj_cmds = []
+			for chunk in chunknames:
+				vdj_cmds.append('perl external/vdjfasta/bin/fasta-vdj-pipeline.pl --file=data/%s --verbose=1'%chunk+'.fasta')
+			num_cores = multiprocessing.cpu_count()
+			pool = Pool(processes=num_cores)
+			print "Running vdj-fasta.  This may take a while..."
+			try:
+				results = pool.map(os.system, vdj_cmds)
+			except:
+				pass
 
-			flag=1
-			containers=[]
-			while flag:
-				Nrunning=0
-				runningchunks=[key for key in chunks.keys() if chunks[key]['status']==1]
-				for chunkname in runningchunks:
-					running=json.loads(bash('sudo docker inspect '+chunks[chunkname]['container']))[0]['State']['Running']
-					if running:
-						Nrunning+=1
-					else:
-						if len(bash('cat '+datadir+chunkname+'.VDJ.H3.L3.CH1.fa').split('\n'))>10:
-							chunks[chunkname]['status']=0
-							bash('sudo docker rm '+chunks[chunkname]['container'])
-							# bash('''sudo docker ps -a | grep Exit | awk '{print $1}' | xargs --no-run-if-empty sudo docker rm''')
-							Ndone=len([key for key in chunks.keys() if chunks[key]['status']==0])
-							print repr(Ndone)+'/'+repr(Nchunks),
-							print 'estimated time remaining '+humanize_time((time.time()-filetime)/Ndone*(Nchunks-Ndone))
-							# print '...finished chunk '+chunkname
-						elif (time.time()-chunks[chunkname]['starttime'])>60:
-							print 'processing failed on '+filename+'!'
-							print 'container '+chunks[chunkname]['container']+' failed while processing '+chunkname
-							print bash('sudo docker logs '+chunks[chunkname]['container'])
-							bash('sudo docker rm '+chunks[chunkname]['container'])
-							bash('''sudo docker ps | grep 'ago' | awk '{print $1}' | xargs --no-run-if-empty sudo docker stop''')
-							bash('''sudo docker ps -a | grep 'ago' | awk '{print $1}' | xargs --no-run-if-empty sudo docker rm''')
-							break
-						else:
-							pass
-
-				time.sleep(.5)
-				Nopen=Nmax-Nrunning
-				rawchunks=[key for key in chunks.keys() if chunks[key]['status']==2]
-				Ncreate=min(Nopen,len(rawchunks))
-				for chunkname in rawchunks[:Ncreate]:
-					try:
-						output=bash(runbase+chunkname+'.fasta'+' --verbose=1').split('\n')[0]
-						chunks[chunkname]['container']=output
-						chunks[chunkname]['status']=1
-						chunks[chunkname]['starttime']=time.time()
-					except:
-						pass
-						# bash('''sudo docker ps -a | grep Exit | awk '{print $1}' | xargs --no-run-if-empty sudo docker rm''')
-
-				if not Nrunning+len(rawchunks):
-					flag=0
-				else:
-					# bash('''sudo docker ps -a | grep Exit | awk '{print $1}' | xargs --no-run-if-empty sudo docker rm''')
-					time.sleep(.5)
 
 			merge_chunks(chunknames,filename,datadir,extensions)
 
@@ -212,16 +163,70 @@ def run_vdjfasta(filenames):
 
 			print 'processing of ' +filename+ 'completed!'
 			print 'file completion time'+humanize_time(time.time()-filetime)
-		except:
-			bash('''sudo docker ps | grep 'ago' | awk '{print $1}' | xargs --no-run-if-empty sudo docker stop''')
-			bash('''sudo docker ps -a | grep 'ago' | awk '{print $1}' | xargs --no-run-if-empty sudo docker rm''')
-			bash('rm -f data/*')				
+		# except:
+		# 	bash('''sudo docker ps | grep 'ago' | awk '{print $1}' | xargs --no-run-if-empty sudo docker stop''')
+		# 	bash('''sudo docker ps -a | grep 'ago' | awk '{print $1}' | xargs --no-run-if-empty sudo docker rm''')
+		# 	bash('rm -f data/*')				
 
 	print 'Processing Complete!'
 	print 'process completion time'+humanize_time(time.time()-processtime)
 
 
 
+
+			# # initialize chunks status dictionary
+			# chunks={}
+			# for chunkname in chunknames:
+			# 	chunks[chunkname]={'status':2}
+
+			# flag=1
+			# containers=[]
+			# while flag:
+			# 	Nrunning=0
+			# 	runningchunks=[key for key in chunks.keys() if chunks[key]['status']==1]
+			# 	for chunkname in runningchunks:
+			# 		running=json.loads(bash('sudo docker inspect '+chunks[chunkname]['container']))[0]['State']['Running']
+			# 		if running:
+			# 			Nrunning+=1
+			# 		else:
+			# 			if len(bash('cat '+datadir+chunkname+'.VDJ.H3.L3.CH1.fa').split('\n'))>10:
+			# 				chunks[chunkname]['status']=0
+			# 				bash('sudo docker rm '+chunks[chunkname]['container'])
+			# 				# bash('''sudo docker ps -a | grep Exit | awk '{print $1}' | xargs --no-run-if-empty sudo docker rm''')
+			# 				Ndone=len([key for key in chunks.keys() if chunks[key]['status']==0])
+			# 				print repr(Ndone)+'/'+repr(Nchunks),
+			# 				print 'estimated time remaining '+humanize_time((time.time()-filetime)/Ndone*(Nchunks-Ndone))
+			# 				# print '...finished chunk '+chunkname
+			# 			elif (time.time()-chunks[chunkname]['starttime'])>60:
+			# 				print 'processing failed on '+filename+'!'
+			# 				print 'container '+chunks[chunkname]['container']+' failed while processing '+chunkname
+			# 				print bash('sudo docker logs '+chunks[chunkname]['container'])
+			# 				bash('sudo docker rm '+chunks[chunkname]['container'])
+			# 				bash('''sudo docker ps | grep 'ago' | awk '{print $1}' | xargs --no-run-if-empty sudo docker stop''')
+			# 				bash('''sudo docker ps -a | grep 'ago' | awk '{print $1}' | xargs --no-run-if-empty sudo docker rm''')
+			# 				break
+			# 			else:
+			# 				pass
+
+			# 	time.sleep(.5)
+			# 	Nopen=Nmax-Nrunning
+			# 	rawchunks=[key for key in chunks.keys() if chunks[key]['status']==2]
+			# 	Ncreate=min(Nopen,len(rawchunks))
+			# 	for chunkname in rawchunks[:Ncreate]:
+			# 		try:
+			# 			output=bash(runbase+chunkname+'.fasta'+' --verbose=1').split('\n')[0]
+			# 			chunks[chunkname]['container']=output
+			# 			chunks[chunkname]['status']=1
+			# 			chunks[chunkname]['starttime']=time.time()
+			# 		except:
+			# 			pass
+			# 			# bash('''sudo docker ps -a | grep Exit | awk '{print $1}' | xargs --no-run-if-empty sudo docker rm''')
+
+			# 	if not Nrunning+len(rawchunks):
+			# 		flag=0
+			# 	else:
+			# 		# bash('''sudo docker ps -a | grep Exit | awk '{print $1}' | xargs --no-run-if-empty sudo docker rm''')
+			# 		time.sleep(.5)
 		
 
 		 

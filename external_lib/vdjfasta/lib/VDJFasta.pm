@@ -59,22 +59,22 @@ sub new {
   $self->{L3}             = [];
   $self->{coords}         = [];
 
-  $self->{dnaVsegdb}    = $raman . "/vdjfasta/db/imgt.V.dna.fa"; 
-  $self->{dnaJsegdb}    = $raman . "/vdjfasta/db/imgt.J.dna.fa";
-  $self->{dnaDsegdb}    = $raman . "/vdjfasta/db/imgt.HD.dna.nr.fa";
-  $self->{dnaCsegdb}    = $raman . "/vdjfasta/db/imgt.CH1.dna.nr.fa";
+  $self->{dnaVsegdb}    = "/home/ubuntu/external_lib/vdjfasta/db/imgt.V.dna.fa";
+  $self->{dnaJsegdb}    = "/home/ubuntu/external_lib/vdjfasta/db/imgt.J.dna.fa";
+  $self->{dnaDsegdb}    = "/home/ubuntu/external_lib/vdjfasta/db/imgt.HD.dna.nr.fa";
+  $self->{dnaCsegdb}    = "/home/ubuntu/external_lib/vdjfasta/db/imgt.CH1.dna.nr.fa";
 
   #$self->{dnaVsegdb}    = "/tools/vdjfasta/db/imgt.V.dna.fa"; 
   #$self->{dnaJsegdb}    = "/tools/vdjfasta/db/imgt.J.dna.fa";
   #$self->{dnaDsegdb}    = "/tools/vdjfasta/db/imgt.HD.dna.nr.fa";
   #$self->{dnaCsegdb}    = "/tools/vdjfasta/db/imgt.CH1.dna.nr.fa";
 
-  $self->{VhVkHMM}      = $raman . "/vdjfasta/db/Vh-linker-Vk.hmm";
+  $self->{VhVkHMM}      = "/home/ubuntu/external_lib/vdjfasta/db/Vh-linker-Vk.hmm";
   #$self->{VhVkHMM}      = "/tools/vdjfasta/db/Vh-linker-Vk.hmm";
  
-  $self->{blast}        = $raman . "/ncbi-blast/bin/blastn";
-  $self->{hmmsearch}    = $raman . "/hmmer/binaries/hmmsearch";
-  $self->{hmmalign}     = $raman . "/hmmer/binaries/hmmalign";
+  $self->{blast}        = "/home/ubuntu/external_lib/ncbi-blast/bin/blastn";
+  $self->{hmmsearch}    = "/home/ubuntu/external_lib/hmmer/binaries/hmmsearch";
+  $self->{hmmalign}     = "/home/ubuntu/external_lib/hmmer/binaries/hmmalign";
 
   $self->{verbose}      = 0;
 

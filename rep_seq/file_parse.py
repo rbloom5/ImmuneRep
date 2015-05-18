@@ -12,7 +12,7 @@ def remove_slash(string):
     #file names without looking like a directory
     for i in range(len(string)):
         if string[i] == '/':
-            string = string[:i] + '%' + string[i+1:]
+            string = string[:i] + '$' + string[i+1:]
     return string
             
     

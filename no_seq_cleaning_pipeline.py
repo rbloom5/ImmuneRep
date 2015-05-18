@@ -39,14 +39,14 @@ def bash(cmd):
 fileIDs = [	\
 			# 'SRR1298742',\
 			# 'SRR1383448',\
-			'SRR1383466',\
-			'SRR1383453',\
-			'SRR1383472',\
-			'SRR1383450',\
-			'SRR1383455',\
-			'SRR1383466',\
-			'SRR1383470',\
-			'SRR1383476',\
+			'newQuake_MID0-len-q-t',\
+			'newQuake_MID1-len-q-t',\
+			'newQuake_MID2-len-q-t',\
+			'newQuake_MID5-len-q-t',\
+			'newQuake_MID6-len-q-t',\
+			'newQuake_MID7-len-q-t',\
+			'newQuake_MID8-len-q-t',\
+			'newQuake_MID9-len-q-t',\
 			] #must be a list of file id's (no .fasta extension)
 
 
@@ -77,10 +77,10 @@ for f in fileIDs:
 
 	#copy from s3 to local
 	bash('aws s3 cp %s /home/ubuntu/tempvdj/%s'%(f_string,f+ext))
-	bash('aws s3 cp s3://tree-output/'+f+'/' ' /home/ubuntu/tree_output/ --recursive')
+	# bash('aws s3 cp s3://tree-output/'+f+'/' ' /home/ubuntu/tree_output/ --recursive')
+
 
 	# # use rep seq to get all properties
-
 	Rep = Rep_sequence_analysis.Rep_seq(['/home/ubuntu/tempvdj/'+f+ext],num=num_sequences)
 	Rep.find_clones(parallel=True)
 	print "calculating statistics..."
@@ -89,22 +89,27 @@ for f in fileIDs:
 	if plots:
 		Rep.plots()
 
+
+
 	#output features and Rep-seq object to files
 	print "saving features to json..."
 	Rep.output_features('/home/ubuntu/tempvdj/'+f+'.json')
 	with open('/home/ubuntu/tempvdj/'+f+'.pkl', 'wb') as output:
 		pickle.dump(Rep, output, pickle.HIGHEST_PROTOCOL)
 
+
+
 	#Copy all files to the appropriate folder in s3
 	print "copying files to s3"
 	bash('aws s3 cp /home/ubuntu/tempvdj/'+f+'.json s3://rep-seq-jsons/')
 	bash('aws s3 cp /home/ubuntu/tempvdj/'+f+'.pkl s3://rep-seq-objects/')
 
-	
 	node_files = [i for i in os.listdir('/home/ubuntu/tree_output') if i.endswith('.fasta.node.txt')]
 	for nf in node_files:
 		aws_loc = 's3://tree-output/'+f+'/' + nf
 		bash('aws s3 cp /home/ubuntu/tree_output/'+nf + ' '+aws_loc)
+
+
 
 	#remove all temp files that have been transferred
 	os.system('sudo rm -f -r /home/ubuntu/tempvdj/*')

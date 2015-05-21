@@ -30,23 +30,44 @@ def bash(cmd):
 	return output
 
 
+def make_dir(dirname):
+	if not os.path.exists('%s/'%dirname):
+		os.makedirs('%s/'%dirname)
+	else:
+		os.system('rm %s/*'%dirname)
+
 
 
 #############################
 ### SET OPTIONS AND INPUTS ##
 #############################
 
-fileIDs = [	\
-			# 'SRR1298742',\
-			# 'SRR1383448',\
-			'newQuake_MID0-len-q-t',\
-			'newQuake_MID1-len-q-t',\
-			'newQuake_MID2-len-q-t',\
-			'newQuake_MID5-len-q-t',\
-			'newQuake_MID6-len-q-t',\
-			'newQuake_MID7-len-q-t',\
-			'newQuake_MID8-len-q-t',\
-			'newQuake_MID9-len-q-t',\
+fileIDs = [	#'SRR1383453',\
+			
+
+			# 'newQuake_MID0-len-q-t',\
+			# 'newQuake_MID1-len-q-t',\
+			# 'newQuake_MID2-len-q-t',\
+			# 'newQuake_MID6-len-q-t',\
+			# 'newQuake_MID7-len-q-t',\
+			# 'newQuake_MID8-len-q-t',\
+			# 'newQuake_MID9-len-q-t',\
+			# 'newQuake_post_vax_MID0-len-q-t',\
+			# 'newQuake_post_vax_MID1-len-q-t',\
+			'newQuake_post_vax_MID2-len-q-t',\
+			'newQuake_post_vax_MID6-len-q-t',\
+			'newQuake_post_vax_MID7-len-q-t',\
+			'newQuake_post_vax_MID8-len-q-t',\
+			'newQuake_post_vax_MID9-len-q-t',\
+			'SRR1298742',\
+			'SRR1383448',\
+			'SRR1383453',\
+			'SRR1383463',\
+			'SRR1383472',\
+			'SRR1383450',\
+			'SRR1383455',\
+			'SRR1383466',\
+			'SRR1383476',\
 			] #must be a list of file id's (no .fasta extension)
 
 
@@ -74,6 +95,10 @@ for f in fileIDs:
 	start = time.time()
 	print "started processing", f
 	f_string = s3_dir + f + ext
+
+	make_dir('/home/ubuntu/tempvdj')
+	make_dir('/home/ubuntu/tree_output')
+	make_dir('/home/ubuntu/parsed_fasta')
 
 	#copy from s3 to local
 	bash('aws s3 cp %s /home/ubuntu/tempvdj/%s'%(f_string,f+ext))
@@ -119,6 +144,10 @@ for f in fileIDs:
 	counter+=1
 	print f, "complete!  %s of %s files finished\n"%(counter,len(fileIDs))
 	print "processing time:", time.time()-start
+
+os.system('sudo rm -f -r /home/ubuntu/tempvdj')
+os.system('sudo rm -f -r /home/ubuntu/tree_output')
+os.system('sudo rm -f -r /home/ubuntu/parsed_fasta')
 
 
 

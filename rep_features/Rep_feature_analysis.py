@@ -15,6 +15,7 @@ def update_rep_stats(reps = 'default'):
 	if reps == 'default':
 
 		#dont share the strings below with anyone!
+		print "connecting to S3"
 		conn = S3Connection('AKIAJ2TEUHQV2LHU7XQQ','VKzoYINBlvZi5uiAIeAnJG5fgLedQPFrmMCpSfBp')
 		json_buck = conn.get_bucket('rep-seq-jsons')
 		obj_buck = conn.get_bucket('rep-seq-objects')
@@ -33,7 +34,7 @@ def update_rep_stats(reps = 'default'):
 		#get rep from s3
 		key.get_contents_to_filename(key.name)
 		rep = str(key.name)
-		print "updating ", rep
+		print "updating ", rep[:-4]
 
 		#load in the correct features dict and rep
 		features_dict = json.load(open(json_names[index]))
@@ -49,6 +50,10 @@ def update_rep_stats(reps = 'default'):
 
 		if "Pruned_Tree_Size" not in features_dict:
 			features_dict["Pruned_Tree_Size"] = calculate_tree_size(Rep, pruned=True)
+
+		if "clone_cdr3_lengths" not in features_dict:
+			features_dict["clone_cdr3_lengths"] = calculate_cdr_lengths(Rep.Clones)
+			features_dict["read_cdr3_lengths"] = calculate_cdr_lengths(Rep.Reads)
 		
 		
 
@@ -72,6 +77,6 @@ def update_rep_stats(reps = 'default'):
 		os.system('rm %s'%json_names[index])
 		os.system('rm %s'%rep)
 		index+=1
-		print "finished updating %s \n"%rep
+		print "finished updating %s \n"%rep[:-4]
 
 

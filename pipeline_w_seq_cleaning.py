@@ -155,9 +155,9 @@ def make_dir(dirname):
 ###########################
 
 #clean seqs:
-# fileIDs = clean_seqs(fileIDs, output_prefix=output_prefix, barcode_file=barcode_file, min_len=min_len, qual_score=qual_score)
-fileIDs = ['newQuake_post_vax_MID0-len-q-t', 'newQuake_post_vax_MID1-len-q-t', 'newQuake_post_vax_MID2-len-q-t', \
-			'newQuake_post_vax_MID6-len-q-t', 'newQuake_post_vax_MID7-len-q-t','newQuake_post_vax_MID8-len-q-t','newQuake_post_vax_MID9-len-q-t']
+fileIDs = clean_seqs(fileIDs, output_prefix=output_prefix, barcode_file=barcode_file, min_len=min_len, qual_score=qual_score)
+# fileIDs = ['newQuake_post_vax_MID0-len-q-t', 'newQuake_post_vax_MID1-len-q-t', 'newQuake_post_vax_MID2-len-q-t', \
+# 			'newQuake_post_vax_MID6-len-q-t', 'newQuake_post_vax_MID7-len-q-t','newQuake_post_vax_MID8-len-q-t','newQuake_post_vax_MID9-len-q-t']
 # Run VDJ-fasta - store output in s3 folder: ''
 multiprocess_vdj_local.run_vdjfasta(fileIDs, num_sequences)
 

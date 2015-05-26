@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import vdj_fasta
-from vdj_fasta import multiprocess_vdj
+from vdj_fasta import multiprocess_vdj_local
 
 import rep_seq
 from rep_seq import Rep_sequence_analysis
@@ -10,6 +10,7 @@ import subprocess
 import time
 import pickle
 import os
+from Bio import SeqIO
 
 
 ##################################################
@@ -40,20 +41,21 @@ def copy_to_s3(files, local_dir, s3_dir):
 	if not isinstance(files, list):
 		files = [files]
 	for f in files:
-		aws_loc = 's3://rna-seq/%s/'%s3_dir + f
+		aws_loc = 's3://%s/'%s3_dir + f
 		bash('aws s3 cp %s/'%local_dir+f+' '+aws_loc)
 
 def copy_from_s3(files,local_dir, s3_dir):
 	if not isinstance(files, list):
 		files = [files]
 	for f in files:
-		aws_loc = 's3://rna-seq/%s/'%s3_dir + f
+		aws_loc = 's3://%s/'%s3_dir + f
 		bash('aws s3 cp ' + aws_loc + ' %s/'%local_dir + f)
 
 def fastq_dump(f, clean=True):
-	os.system('fastq-dump ./%s'%f)
+	os.system('./external_lib/sratoolkit.2.5.0-1-ubuntu64/bin/fastq-dump ./%s'%f)
 	copy_to_s3(f[:-4]+'.fastq', '.', 'patient_repertoire_data')
 	if clean:
+		SeqIO.convert(f[:-4]+'.fastq', 'fastq', f[:-4]+'.fasta', 'fasta')
 		copy_to_s3(f[:-4]+'.fastq', '.', 'clean-repertoire-data')
 
 
@@ -102,7 +104,7 @@ fileIDs = [	#'SRR1383453',\
 			'SRR1171341',\
 			'SRR1171342',\
 			'SRR1171343',\
-			'SRR1171344',\
+			# 'SRR1171344',\
 			'SRR1171345',\
 
 
@@ -129,11 +131,19 @@ plots = False #if you are running on a local machine and want to see plots - set
 ####### MAIN SCRIPT #######
 ###########################
 
-#get files, if necessary
-fastq_dump(fileIDs)
+# #get files, if necessary
+# for ids in fileIDs[10:]:
+# 	print "downloading %s from SRA"%ids
+# 	counter=1
+# 	os.system('wget ftp://ftp-trace.ncbi.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/%s/%s/%s.sra'%(ids[:6], ids, ids))
+# 	fastq_dump(ids+'.sra')
+# 	os.system('rm %s.sra'%ids)
+# 	os.system('rm %s.fastq'%ids)
+# 	os.system('rm %s.fasta'%ids)
+
 
 # Run VDJ-fasta - store output in s3 folder: ''
-run_vdjfasta(fileIDs, num_sequences)
+multiprocess_vdj_local.run_vdjfasta(fileIDs, num_sequences)
 
 # load in vdj-fasta output and pull out features using rep-seq
 ext = '.VDJ.H3.L3.CH1.fa'

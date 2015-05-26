@@ -124,19 +124,19 @@ def run_vdjfasta(filenames, reads=None):
 
 		filetime=time.time()
 		#copy .fastq from s3
-		# cmd = 'aws s3 cp s3://'+s3dir+filename+'.fastq '+datadir+filename+'.fastq'
-		# os.system(cmd)
+		cmd = 'aws s3 cp s3://'+s3dir+filename+'.fastq '+datadir+filename+'.fastq'
+		os.system(cmd)
 
-		# # convert to .fasta file
-		# SeqIO.convert(datadir+filename+'.fastq', 'fastq', datadir+filename+'.fasta', 'fasta')
+		# convert to .fasta file
+		SeqIO.convert(datadir+filename+'.fastq', 'fastq', datadir+filename+'.fasta', 'fasta')
 
-		# # copy .fasta file to s3
-		# cmd='aws s3 cp '+datadir+filename+'.fasta s3://'+s3dir+filename+'.fasta'
-		# os.system(cmd)
+		# copy .fasta file to s3
+		cmd='aws s3 cp '+datadir+filename+'.fasta s3://'+s3dir+filename+'.fasta'
+		os.system(cmd)
 
-		# # delete .fastq from ec2
-		# cmd = 'rm '+datadir+filename+'.fastq'
-		# os.system(cmd)
+		# delete .fastq from ec2
+		cmd = 'rm '+datadir+filename+'.fastq'
+		os.system(cmd)
 
 		cmd = 'aws s3 cp s3://'+s3dir+filename+'.fasta '+datadir #+filename+'.fasta'
 		os.system(cmd)

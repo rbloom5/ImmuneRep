@@ -9,3 +9,9 @@
 *.csv
 0
 ./ipynb_checkpoints
+
+*.json
+
+*.pkl
+
+*.txt

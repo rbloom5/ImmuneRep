@@ -70,7 +70,7 @@ class Experiment:
 
 	def clone_bars(self):
 
-		self.clone_DF.plot(x='Sample', kind='bar', figsize=(20,6));
+		c
 
 	def clone_cum_dist(self):
 

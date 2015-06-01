@@ -48,6 +48,7 @@ def Make_VJ_Matrix():
     			'IGHV7-34-1$40$NL1.rn', 'IGHV7-34-1$40$NL1.rn', 'IGHV7-34-1$40$NL1.rn', 'IGHV7-34-1$40$NL1.rn']
 
 
+
     J_names = ['IGHJ1', 'IGHJ1P', 'IGHJ2', 'IGHJ2P', 'IGHJ3', 'IGHJ3', 'IGHJ3P', 'IGHJ3P', 'IGHJ4', 'IGHJ4', 'IGHJ4', 'IGHJ5', 'IGHJ5', 'IGHJ6',\
                'IGHJ6', 'IGHJ6', 'IGHJ6', 'mIGHJ1', 'mIGHJ1', 'mIGHJ1', 'mIGHJ2', 'mIGHJ2', 'mIGHJ3', 'mIGHJ3', 'mIGHJ4', 'mIGKJ1', 'mIGKJ1', 'mIGKJ2', \
                'mIGKJ2', 'mIGKJ2', 'mIGKJ3', 'mIGKJ3', 'mIGKJ4', 'mIGKJ4', 'mIGKJ5', 'mIGLJ1', 'mIGLJ2', 'mIGLJ3', 'mIGLJ3P', 'mIGLJ4', 'IGLJ1', 'IGLJ2/3', \
@@ -59,6 +60,7 @@ def Make_VJ_Matrix():
                'TRAJ56', 'TRAJ57', 'TRAJ58', 'TRAJ59', 'TRAJ6', 'TRAJ60', 'TRAJ61', 'TRAJ7', 'TRAJ8', 'TRAJ9', 'TRBJ1-1', 'TRBJ1-2', 'TRBJ1-3', 'TRBJ1-4', 'TRBJ1-5', \
                'TRBJ1-6', 'TRBJ1-6', 'TRBJ2-1', 'TRBJ2-2', 'TRBJ2-2P', 'TRBJ2-3', 'TRBJ2-4', 'TRBJ2-5', 'TRBJ2-6', 'TRBJ2-7', 'TRBJ2-7', 'TRGJ1', 'TRGJ1', 'TRGJ2', 'TRGJP', \
                'TRGJP1', 'TRGJP2', 'TRDJ1', 'TRDJ2', 'TRDJ3', 'TRDJ4']
+
 
     return pd.DataFrame(np.zeros((len(V_names),len(J_names))),index=V_names,columns=J_names)
 

@@ -229,6 +229,9 @@ class Rep_seq:
 		head, tail = os.path.split(self.filepath[0])
 		dirstring = tail.split('.')[0]+'_vj_files'
 		os.system("mkdir "+dirstring)
+		os.system('mkdir /home/ubuntu/tree_output')
+		os.system('mkdir /home/ubuntu/parsed_fasta')
+
 		file_list = []
 		# make fasta file for all clones in each VJ pair
 		print "writing files for tree creation"
@@ -242,13 +245,13 @@ class Rep_seq:
 
 
 		# set up a parallell processing pool
-		num_cores = multiprocessing.cpu_count()/4
+		num_cores = multiprocessing.cpu_count()
 		pool = Pool(processes=num_cores)
 		nIter = 300 #should do 300+ for large repertoires
 		fstrings_for_pool=[]
 
 		matlab_call = '/home/ubuntu/imm_tree_test/run_run_immunitree.sh \
-						/usr/local/MATLAB/MATLAB_Compiler_Runtime/v83/ '
+						/usr/local/v83 '
 						#/home/ubuntu/SRR1383448_vj_files/immTree_IGHV1-2_IGHJ4.fasta 50'
 
 		#make list of all the bash calls (one for each VJ file we input to immunitree)
@@ -281,6 +284,7 @@ class Rep_seq:
 				for leaf in self.pruned_tree_dict[VJ_name].get_leaves(): leaf.detach()
 			except:
 				continue
+
 
 
 	def find_clusters(self):

@@ -52,11 +52,11 @@ def copy_from_s3(files,local_dir, s3_dir):
 		bash('aws s3 cp ' + aws_loc + ' %s/'%local_dir + f)
 
 def fastq_dump(f, clean=True):
-	os.system('./external_lib/sratoolkit.2.5.0-1-ubuntu64/bin/fastq-dump ./%s'%f)
-	copy_to_s3(f[:-4]+'.fastq', '.', 'patient_repertoire_data')
+	os.system('./packages/sra_toolkit/bin/fastq-dump %s'%f)
+	# copy_to_s3(f+'.fastq', '.', 'patient_repertoire_data')
 	if clean:
-		SeqIO.convert(f[:-4]+'.fastq', 'fastq', f[:-4]+'.fasta', 'fasta')
-		copy_to_s3(f[:-4]+'.fastq', '.', 'clean-repertoire-data')
+		SeqIO.convert(f+'.fastq', 'fastq', f+'.fasta', 'fasta')
+		copy_to_s3(f+'.fasta', '.', 'clean-repertoire-data')
 
 
 
@@ -91,30 +91,45 @@ fileIDs = [	#'SRR1383453',\
 			# 'SRR1383466',\
 			# 'SRR1383476',\
 
-			#christian
-			'SRR1298740',\
-			'SRR1297001',\
+			# #christian
+			# 'SRR1298740',\
+			# 'SRR1297001',\
 
-			#allergies
-			'SRR1171336',\
-			'SRR1171337',\
-			'SRR1171338',\
-			'SRR1171339',\
-			'SRR1171340',\
-			'SRR1171341',\
-			'SRR1171342',\
-			'SRR1171343',\
-			# 'SRR1171344',\
-			'SRR1171345',\
+			# #allergies
+			# 'SRR1171336',\
+			# 'SRR1171337',\
+			# 'SRR1171338',\
+			# 'SRR1171339',\
+			# 'SRR1171340',\
+			# 'SRR1171341',\
+			# 'SRR1171342',\
+			# 'SRR1171343',\
+			# # 'SRR1171344',\
+			# 'SRR1171345',\
 
 
-			#b_cell subsets
-			'SRR1168779',\
-			'SRR1168788',\
-			'SRR1168789',\
-			'SRR1168790',\
-			'SRR1168792',\
-			'SRR1168794',\
+			# #b_cell subsets
+			# 'SRR1168779',\
+			# 'SRR1168788',\
+			# 'SRR1168789',\
+			# 'SRR1168790',\
+			# 'SRR1168792',\
+			# 'SRR1168794',\
+
+			#more christian
+			'SRR1298383',\
+			'SRR1298730',\
+			'SRR1298731',\
+			'SRR1298732',\
+			'SRR1298733',\
+			'SRR1298734',\
+			'SRR1298735',\
+			'SRR1298736',\
+			'SRR1298737',\
+			'SRR1298738',\
+			'SRR1298739',\
+			'SRR1298741',\
+			'SRR1298743',\
 
 
 			] #must be a list of file id's (no .fasta extension)
@@ -132,14 +147,14 @@ plots = False #if you are running on a local machine and want to see plots - set
 ###########################
 
 # #get files, if necessary
-# for ids in fileIDs[10:]:
-# 	print "downloading %s from SRA"%ids
-# 	counter=1
-# 	os.system('wget ftp://ftp-trace.ncbi.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/%s/%s/%s.sra'%(ids[:6], ids, ids))
-# 	fastq_dump(ids+'.sra')
-# 	os.system('rm %s.sra'%ids)
-# 	os.system('rm %s.fastq'%ids)
-# 	os.system('rm %s.fasta'%ids)
+for ids in fileIDs:
+	print "downloading %s from SRA"%ids
+	counter=1
+	# os.system('wget ftp://ftp-trace.ncbi.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/%s/%s/%s.sra'%(ids[:6], ids, ids))
+	fastq_dump(ids)
+	os.system('rm -r ncbi')
+	os.system('rm %s.fastq'%ids)
+	os.system('rm %s.fasta'%ids)
 
 
 # Run VDJ-fasta - store output in s3 folder: ''
@@ -156,8 +171,7 @@ for f in fileIDs:
 	f_string = s3_dir + f + ext
 
 	make_dir('/home/ubuntu/tempvdj')
-	make_dir('/home/ubuntu/tree_output')
-	make_dir('/home/ubuntu/parsed_fasta')
+
 
 	#copy from s3 to local
 	bash('aws s3 cp %s /home/ubuntu/tempvdj/%s'%(f_string,f+ext))
@@ -192,21 +206,21 @@ for f in fileIDs:
 	for nf in node_files:
 		aws_loc = 's3://tree-output/'+f+'/' + nf
 		bash('aws s3 cp /home/ubuntu/tree_output/'+nf + ' '+aws_loc)
+	os.system('sudo rm -f -r /home/ubuntu/tree_output')
+	os.system('sudo rm -f -r /home/ubuntu/parsed_fasta')
 
 
 
 	#remove all temp files that have been transferred
 	os.system('sudo rm -f -r /home/ubuntu/tempvdj/*')
-	os.system('sudo rm -f -r /home/ubuntu/tree_output/*')
-	os.system('sudo rm -f -r /home/ubuntu/parsed_fasta/*')
+
 
 	counter+=1
 	print f, "complete!  %s of %s files finished\n"%(counter,len(fileIDs))
 	print "processing time:", time.time()-start
 
 os.system('sudo rm -f -r /home/ubuntu/tempvdj')
-os.system('sudo rm -f -r /home/ubuntu/tree_output')
-os.system('sudo rm -f -r /home/ubuntu/parsed_fasta')
+
 
 
 

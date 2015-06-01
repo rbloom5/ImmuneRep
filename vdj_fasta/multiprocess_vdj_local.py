@@ -103,7 +103,7 @@ def humanize_time(secs):
     return '%02d:%02d:%02d' % (hours, mins, secs)
 
 
-def run_vdjfasta(filenames, reads=None):
+def run_vdjfasta(filenames, reads=None, fastq=False):
 
 	extensions = ('.C.germdata.txt','.L1.acc.txt','.aa.fa','.wIgs.stock',\
               '.D.germdata.txt','.L2.acc.txt',\
@@ -123,20 +123,22 @@ def run_vdjfasta(filenames, reads=None):
 	for filename in filenames:
 
 		filetime=time.time()
-		#copy .fastq from s3
-		cmd = 'aws s3 cp s3://'+s3dir+filename+'.fastq '+datadir+filename+'.fastq'
-		os.system(cmd)
 
-		# convert to .fasta file
-		SeqIO.convert(datadir+filename+'.fastq', 'fastq', datadir+filename+'.fasta', 'fasta')
+		if fastq:
+			#copy .fastq from s3
+			cmd = 'aws s3 cp s3://'+s3dir+filename+'.fastq '+datadir+filename+'.fastq'
+			os.system(cmd)
 
-		# copy .fasta file to s3
-		cmd='aws s3 cp '+datadir+filename+'.fasta s3://'+s3dir+filename+'.fasta'
-		os.system(cmd)
+			# convert to .fasta file
+			SeqIO.convert(datadir+filename+'.fastq', 'fastq', datadir+filename+'.fasta', 'fasta')
 
-		# delete .fastq from ec2
-		cmd = 'rm '+datadir+filename+'.fastq'
-		os.system(cmd)
+			# copy .fasta file to s3
+			cmd='aws s3 cp '+datadir+filename+'.fasta s3://'+s3dir+filename+'.fasta'
+			os.system(cmd)
+
+			# delete .fastq from ec2
+			cmd = 'rm '+datadir+filename+'.fastq'
+			os.system(cmd)
 
 		cmd = 'aws s3 cp s3://'+s3dir+filename+'.fasta '+datadir #+filename+'.fasta'
 		os.system(cmd)
@@ -147,7 +149,7 @@ def run_vdjfasta(filenames, reads=None):
 
 		vdj_cmds = []
 		for chunk in chunknames:
-			vdj_cmds.append('perl /home/ubuntu/external_lib/vdjfasta/bin/fasta-vdj-pipeline.pl --file=/home/ubuntu/data/%s --verbose=1'%(chunk+'.fasta'))
+			vdj_cmds.append('perl /home/ubuntu/packages/vdjfasta/bin/fasta-vdj-pipeline.pl --file=/home/ubuntu/data/%s --verbose=1'%(chunk+'.fasta'))
 		num_cores = multiprocessing.cpu_count()
 		pool = Pool(processes=num_cores)
 		print "Running vdj-fasta.  This may take a while..."

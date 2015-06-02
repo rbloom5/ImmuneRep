@@ -18,18 +18,27 @@ def update_rep_stats(reps = 'default'):
 		print "connecting to S3"
 		conn = S3Connection('AKIAJ2TEUHQV2LHU7XQQ','VKzoYINBlvZi5uiAIeAnJG5fgLedQPFrmMCpSfBp')
 		json_buck = conn.get_bucket('rep-seq-jsons')
-		obj_buck = conn.get_bucket('rep-seq-objects')
-		json_names = [str(key.name) for key in json_buck.list()]
+		json_buck_list = conn.get_bucket('rep-seq-jsons').list()
+		obj_buck_list = conn.get_bucket('rep-seq-objects').list()
+		json_names = [str(key.name) for key in json_buck_list]
+	else:
+		#dont share the strings below with anyone!
+		print "connecting to S3"
+		conn = S3Connection('AKIAJ2TEUHQV2LHU7XQQ','VKzoYINBlvZi5uiAIeAnJG5fgLedQPFrmMCpSfBp')
+		json_buck = conn.get_bucket('rep-seq-jsons')
+		json_buck_list = [key for key in conn.get_bucket('rep-seq-jsons').list() if str(key.name)[:-5] in reps] 
+		obj_buck_list = [key for key in conn.get_bucket('rep-seq-objects').list() if str(key.name)[:-4] in reps]
+		json_names = [str(key.name) for key in json_buck_list]
 
 	# The jsons are small, so just download them all at once
 	print "downloading jsons"
-	for key in json_buck.list():
+	for key in json_buck_list:
 		key.get_contents_to_filename(key.name)
 
 
 	#run through each rep, download it, update features dict with any new features, and dump it into a new json
 	index=0
-	for key in obj_buck.list():
+	for key in obj_buck_list:
 
 		#get rep from s3
 		key.get_contents_to_filename(key.name)
@@ -78,5 +87,6 @@ def update_rep_stats(reps = 'default'):
 		os.system('rm %s'%rep)
 		index+=1
 		print "finished updating %s \n"%rep[:-4]
+	conn.close()
 
 

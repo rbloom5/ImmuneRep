@@ -68,6 +68,8 @@ class Experiment:
 
 		self.clone_DF = pd.DataFrame(clone_ls, columns=Clone_columns)
 
+#Investigating clone diversity		
+
 	def clone_bars(self):
 
 		self.clone_DF.plot(x='Sample', kind='bar', figsize=(20,6));
@@ -84,6 +86,8 @@ class Experiment:
 		        data = self.groups[igroup]['sample data'][sample]['clone_distribution']
 		        plt.plot(np.array(data).cumsum(), color=colors[igroup])
 		plt.legend(handles=patches, loc=4);
+
+#Investigating Somatic Hyper Mutation	
 
 	def class_SHM(self):
 
@@ -121,44 +125,46 @@ class Experiment:
 
 		#df = self.class_fraction_DF[self.class_fraction_DF.Antibody == 'IGHM']
 
-	def pruned_vs_full(self):
+#Tree analysis
 
+	def tree_scatter(self, x, y, size_variable=False):
 		colors = sns.color_palette("hls", len(self.groups))
-		plt.figure(figsize=(20,6))
+		plt.figure(figsize=(20,10))
+
+		columns = ['VJ', 'VJ Freq', 'Tree Size', 'Pruned Tree Size', 'VJ Fraction']
+		patches = []
 
 		for igroup, group in enumerate(self.groups):
-		    for sample in group['samples']:
-		        fullDF = pd.DataFrame.from_dict(self.groups[igroup]['sample data'][sample]['Full_Tree_Size'])
-		        prunedDF = pd.DataFrame.from_dict(self.groups[igroup]['sample data'][sample]['Pruned_Tree_Size'])
-		        
-		        prune = prunedDF.values.reshape(702)
-		        full = fullDF.values.reshape(702)
-		        
-		        plt.scatter(prune, full, s=10, c=colors[igroup]);
-		        
-		plt.show()
+			patches.append(mpatches.Patch(color=colors[igroup], label=group['name']))
 
-	def pruned_vs_total_reads(self):
+			for sample in group['samples']:
+				fullDF = pd.DataFrame.from_dict(self.groups[igroup]['sample data'][sample]['Full_Tree_Size'])
+				prunedDF = pd.DataFrame.from_dict(self.groups[igroup]['sample data'][sample]['Pruned_Tree_Size'])
 
-		colors = sns.color_palette("hls", len(self.groups))
-		plt.figure(figsize=(20,6))
+				data = []
+				for key in self.groups[igroup]['sample data'][sample]['VJ_freqs']:
+					V = key.split('_')[0]
+					J = key.split('_')[1]
 
-		for igroup, group in enumerate(self.groups):
-		    for sample in group['samples']:
-		        fullDF = pd.DataFrame.from_dict(self.groups[igroup]['sample data'][sample]['Full_Tree_Size'])
-		        #prunedDF = pd.DataFrame.from_dict(test.groups[igroup]['sample data'][sample]['Pruned_Tree_Size'])
-		        
-		        tree_size_list = []
-		        total_reads = []
-		        for key in self.groups[igroup]['sample data'][sample]['VJ_freqs']:
-		            V = key.split('_')[0]
-		            J = key.split('_')[1]
+					VJ_freq = self.groups[igroup]['sample data'][sample]['VJ_freqs'][key]
+					VJ_frac = self.groups[igroup]['sample data'][sample]['VJ_fractions'][key]
+					tree_size = fullDF[J].loc[V]
+					pruned_tree_size = prunedDF[J].loc[V]
 
-		            tree_size_list.append(fullDF[J].loc[V])
-		            total_reads.append(test.groups[igroup]['sample data'][sample]['VJ_freqs'][key])
-		            
-		        plt.scatter(tree_size_list, total_reads, s=10, c=colors[igroup]);
-		        
+					data.append([key, VJ_freq, tree_size, pruned_tree_size, VJ_frac*10000])
+
+				plotting_DF = pd.DataFrame(data, columns = columns).set_index('VJ')
+
+				if size_variable != False : circle_size = plotting_DF[size_variable].tolist()
+				else: circle_size = 100
+
+				plt.scatter(plotting_DF[x].tolist(), plotting_DF[y].tolist(), s=circle_size, c=colors[igroup], alpha=0.8);
+
+		plt.xlim(0)
+		plt.ylim(0)
+		plt.ylabel(y)
+		plt.xlabel(x)
+		plt.legend(handles=patches, loc=4)
 		plt.show()
 		        
         

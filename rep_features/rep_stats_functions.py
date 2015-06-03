@@ -95,6 +95,23 @@ def calculate_cdr_lengths(obj_dict, cdr='cdr3'):
 	return len_dict
 
 
+def calculate_vj_shm(vj_clones):
+    sh_means = {}
+    sh_stdevs = {}
+    for vj in vj_clones:
+        # print vj_clones[vj]
+        all_sh = []
+        for clone in vj_clones[vj]:
+            all_sh.append(vj_clones[vj][clone].sh)
+        sh_means[vj] = np.array(all_sh).mean() 
+        sh_stdevs[vj] = np.array(all_sh).std() 
+
+    return sh_means, sh_stdevs
+
+
+
+
+
 
 
 

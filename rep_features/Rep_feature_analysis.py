@@ -63,6 +63,10 @@ def update_rep_stats(reps = 'default'):
 		if "clone_cdr3_lengths" not in features_dict:
 			features_dict["clone_cdr3_lengths"] = calculate_cdr_lengths(Rep.Clones)
 			features_dict["read_cdr3_lengths"] = calculate_cdr_lengths(Rep.Reads)
+
+		if "VJ_shm_mean" not in features_dict:
+			features_dict['VJ_shm_mean'], features_dict['VJ_shm_stdev'] = calculate_vj_shm(Rep.Clones_split_by_VJ)
+
 		
 		
 

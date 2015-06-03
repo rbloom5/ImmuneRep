@@ -181,7 +181,7 @@ class Rep_seq:
 					                               IDs = IDs,\
 					                               Vmut = Vmut,\
 					                               Jmut = Jmut,\
-					                               sh = sh)
+					                               sh = sh )
 
 
 					Clones_split_by_VJ[germ][clone_num] = Clone(V=germ, \
@@ -195,7 +195,7 @@ class Rep_seq:
 					                               			IDs = IDs,\
 					                               			Vmut = Vmut,\
 					                               			Jmut = Jmut,\
-					                               			sh = sh)
+					                               			sh = sh )
 					clone_index+=1
 				
 				#print progress 

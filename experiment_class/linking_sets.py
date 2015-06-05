@@ -32,12 +32,12 @@ def christianDF():
 	    
 	return pd.DataFrame(ls, columns=columns)
 
-def experiment_list():
+def create_linked_list():
 
-	christianDF = christianDF()
+	DF = christianDF()
 
 	ls = []
-	for index, row in christianDF.iterrows():
+	for index, row in sDF.iterrows():
 	    ls.append([str(row[0])+" "+row[6], row[7]])
 	print ls
 

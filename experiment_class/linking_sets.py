@@ -37,7 +37,7 @@ def create_linked_list():
 	DF = christianDF()
 
 	ls = []
-	for index, row in sDF.iterrows():
+	for index, row in DF.iterrows():
 	    ls.append([str(row[0])+" "+row[6], row[7]])
 	print ls
 

@@ -73,6 +73,18 @@ def update_rep_stats(reps = 'default'):
 		if "VJ_generations" not in features_dict:
 			features_dict["VJ_generations"] = generations(Rep.tree_dict)
 
+		if "leafiness_matrix" not in features_dict:
+			features_dict["leafiness_matrix"] = leafiness_matrix(Rep.tree_dict)
+
+		if "leafiness_global" not in features_dict:
+			features_dict["leafiness_global"] = leafiness_global(Rep.tree_dict)
+
+		if "generations_matrix" not in features_dict:
+			features_dict["generations_matrix"] = generations_matrix(features_dict["VJ_generations"])
+
+		if "generations_global" not in features_dict:
+			features_dict["generations_global"] = generations_global(features_dict["VJ_generations"])
+
 		
 		
 

@@ -1,6 +1,7 @@
 #!/usr/bin/python
-
-
+import pandas as pd
+from ete2 import Tree
+import numpy as np
 
 
 def Make_VJ_Matrix():
@@ -42,7 +43,7 @@ def calculate_tree_size(rep_obj, pruned=False):
 
 	tree_size_DF = Make_VJ_Matrix()
 
-	for vj_pair in rep_obj.tree_dict:
+	for vj_pair in dictionary:
 		V = vj_pair.split('_')[0]
 		J = vj_pair.split('_')[1]
 
@@ -120,15 +121,7 @@ def leafiness_global(tree_dict):
         
         ls.append(float(leaves)/float(size))
         
-    return {'max': max(ls), 'avg': np.average(ls), 'std': np.std(ls)}
-
-def generations_global(generations_dict):
-    ls = []
-
-    for vj_pair in generations_dict:
-        ls.append(generations_dict[vj_pair])
-        
-    return {'max': max(ls), 'avg': np.average(ls), 'std': np.std(ls)}
+    return {'max': max(ls), 'avg': np.average(ls), 'std': np.std(ls), 'list': ls}
 
 def generations_matrix(generations_dict):
 
@@ -144,30 +137,57 @@ def generations_matrix(generations_dict):
 
     return generations_dict
 
-def diversity_global(generations_dict):
+def generations_global(generations_dict):
     ls = []
 
     for vj_pair in generations_dict:
         ls.append(generations_dict[vj_pair])
         
-    return {'max': max(ls), 'avg': np.average(ls), 'std': np.std(ls)}
+    return {'max': max(ls), 'avg': np.average(ls), 'std': np.std(ls), 'list': ls}
 
-def diversity_matrix(generations_dict):
+def diversity_matrix(tree_size_dict, vj_freqs_dict):
 
-    generations_DF = Make_VJ_Matrix()
-
-    for vj_pair in generations_dict:
+    diversity_DF = Make_VJ_Matrix()
+    tree_size_DF = pd.DataFrame(tree_size_dict)
+    
+    for vj_pair in vj_freqs_dict:
         V = vj_pair.split('_')[0]
         J = vj_pair.split('_')[1]
 
-        generations_DF[J].loc[V] = generations_dict[vj_pair]
+        diversity_DF[J].loc[V] = float(tree_size_DF[J].loc[V])/vj_freqs_dict[vj_pair]
 
-    generations_dict = generations_DF.to_dict()
+    diversity_dict = diversity_DF.to_dict()
 
-    return generations_dict
+    return diversity_dict
 
+def diversity_global(tree_size_dict, vj_freqs_dict):
+    ls = []
+    tree_size_DF = pd.DataFrame(tree_size_dict)
+    
+    for vj_pair in vj_freqs_dict:
+        V = vj_pair.split('_')[0]
+        J = vj_pair.split('_')[1]
 
+        ls.append(float(tree_size_DF[J].loc[V])/vj_freqs_dict[vj_pair])
 
+    return {'max': max(ls), 'avg': np.average(ls), 'std': np.std(ls), 'list': ls}
+
+def d50(clones, num_Reads):
+
+    d50_amount = num_Reads/2
+    read_count=0
+    for i in clones:
+        read_count+=clones[i].num_reads
+        if read_count>=d50_amount:
+            return i/float(len(clones))
+
+def CDR3_global(clone_CDR3_lengths):
+
+    ls = []
+    for length in clone_CDR3_lengths:
+        for i in range(clone_CDR3_lengths[length]):
+            ls.append(np.float64(length))        
+    
 
 
 

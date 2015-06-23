@@ -85,6 +85,15 @@ def update_rep_stats(reps = 'default'):
 		if "generations_global" not in features_dict:
 			features_dict["generations_global"] = generations_global(features_dict["VJ_generations"])
 
+		if "diversity_matrix" not in features_dict:
+			features_dict["diversity_matrix"] = diversity_matrix(features_dict['Full_Tree_Size'],features_dict['VJ_freqs'])
+
+		if "diversity_global" not in features_dict:
+			features_dict["diversity_global"] = diversity_global(features_dict['Full_Tree_Size'],features_dict['VJ_freqs'])
+
+		if "global_d50" not in features_dict:
+			features_dict["global_d50"] = d50(Rep.Clones ,features_dict['num_Reads'])
+
 		
 		
 

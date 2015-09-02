@@ -14,6 +14,7 @@ from collections import OrderedDict
 from ete2 import Tree
 import glob
 import operator
+import time
 
 
 
@@ -226,6 +227,7 @@ class Rep_seq:
 
 
 		#make somewhat descriptive directory and file names
+		start = time.time()
 		head, tail = os.path.split(self.filepath[0])
 		dirstring = tail.split('.')[0]+'_vj_files'
 		os.system("mkdir "+dirstring)
@@ -245,9 +247,9 @@ class Rep_seq:
 
 
 		# set up a parallell processing pool
-		num_cores = multiprocessing.cpu_count()
+		num_cores = multiprocessing.cpu_count()/3
 		pool = Pool(processes=num_cores)
-		nIter = 300 #should do 300+ for large repertoires
+		nIter = 200 #should do 300+ for large repertoires
 		fstrings_for_pool=[]
 
 		matlab_call = '/home/ubuntu/imm_tree_test/run_run_immunitree.sh \
@@ -284,6 +286,7 @@ class Rep_seq:
 				for leaf in self.pruned_tree_dict[VJ_name].get_leaves(): leaf.detach()
 			except:
 				continue
+		print "%s tree process time"%dirstring, time.time()-start
 
 
 

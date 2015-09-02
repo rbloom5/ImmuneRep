@@ -113,6 +113,7 @@ for f in fileIDs:
 
 	#output features and Rep-seq object to files
 
+
 	
 	node_files = [i for i in os.listdir('/home/ubuntu/tree_output') if i.endswith('.fasta.node.txt')]
 	for nf in node_files:

@@ -53,7 +53,7 @@ def copy_from_s3(files,local_dir, s3_dir):
 
 def fastq_dump(f, clean=True):
 	os.system('./packages/sra_toolkit/bin/fastq-dump %s'%f)
-	# copy_to_s3(f+'.fastq', '.', 'patient_repertoire_data')
+	copy_to_s3(f+'.fastq', '.', 'patient_repertoire_data')
 	if clean:
 		SeqIO.convert(f+'.fastq', 'fastq', f+'.fasta', 'fasta')
 		copy_to_s3(f+'.fasta', '.', 'clean-repertoire-data')
@@ -117,19 +117,41 @@ fileIDs = [	#'SRR1383453',\
 			# 'SRR1168794',\
 
 			#more christian
-			'SRR1298383',\
-			'SRR1298730',\
-			'SRR1298731',\
-			'SRR1298732',\
-			'SRR1298733',\
-			'SRR1298734',\
-			'SRR1298735',\
-			'SRR1298736',\
-			'SRR1298737',\
-			'SRR1298738',\
-			'SRR1298739',\
-			'SRR1298741',\
-			'SRR1298743',\
+			# 'SRR1298383',\
+			# 'SRR1298730',\
+			# 'SRR1298731',\
+			# 'SRR1298732',\
+			# 'SRR1298733',\
+			# 'SRR1298734',\
+			# 'SRR1298735',\
+			# 'SRR1298736',\
+			# 'SRR1298737',\
+			# 'SRR1298738',\
+			# 'SRR1298739',\
+			# 'SRR1298741',\
+			# 'SRR1298743',\
+
+			#SLE
+			# 'SRR1959703',\
+			# 'SRR1960371',\
+			# 'SRR1961400',\
+			# 'SRR1964710',\
+			# 'SRR1964711',\
+			# 'SRR1964712',\
+			'SRR1964713',\
+			'SRR1964786',\
+			'SRR1964787',\
+			'SRR1964788',\
+			'SRR1964792',\
+			'SRR1964793',\
+			'SRR1964794',\
+			'SRR1964795',\
+			'SRR1964796',\
+			'SRR1964797',\
+			'SRR1964798',\
+			'SRR1964799',\
+			'SRR1964800',\
+			'SRR1964801',\
 
 
 			] #must be a list of file id's (no .fasta extension)
@@ -147,18 +169,18 @@ plots = False #if you are running on a local machine and want to see plots - set
 ###########################
 
 # #get files, if necessary
-for ids in fileIDs:
-	print "downloading %s from SRA"%ids
-	counter=1
-	# os.system('wget ftp://ftp-trace.ncbi.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/%s/%s/%s.sra'%(ids[:6], ids, ids))
-	fastq_dump(ids)
-	os.system('rm -r ncbi')
-	os.system('rm %s.fastq'%ids)
-	os.system('rm %s.fasta'%ids)
+# for ids in fileIDs:
+# 	print "downloading %s from SRA"%ids
+# 	counter=1
+# 	# os.system('wget ftp://ftp-trace.ncbi.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/%s/%s/%s.sra'%(ids[:6], ids, ids))
+# 	fastq_dump(ids)
+# 	os.system('rm -r ncbi')
+# 	os.system('rm %s.fastq'%ids)
+# 	os.system('rm %s.fasta'%ids)
 
 
-# Run VDJ-fasta - store output in s3 folder: ''
-multiprocess_vdj_local.run_vdjfasta(fileIDs, num_sequences)
+# # Run VDJ-fasta - store output in s3 folder: ''
+# multiprocess_vdj_local.run_vdjfasta(fileIDs, num_sequences)
 
 # load in vdj-fasta output and pull out features using rep-seq
 ext = '.VDJ.H3.L3.CH1.fa'

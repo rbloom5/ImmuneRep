@@ -2,6 +2,7 @@
 
 import vdj_fasta
 from vdj_fasta import multiprocess_vdj
+from vdj_fasta import multiprocess_vdj_local
 
 import rep_seq
 from rep_seq import Rep_sequence_analysis
@@ -89,36 +90,45 @@ fileIDs = [	#'SRR1383453',\
 			# 'SRR1383466',\
 			# 'SRR1383476',\
 
-			#christian
-			'SRR1298740',\
-			'SRR1297001',\
+			# #christian
+			# 'SRR1298740',\
+			# 'SRR1297001',\
 
-			#allergies
-			'SRR1171336',\
-			'SRR1171337',\
-			'SRR1171338',\
-			'SRR1171339',\
-			'SRR1171340',\
-			'SRR1171341',\
-			'SRR1171342',\
-			'SRR1171343',\
-			'SRR1171344',\
-			'SRR1171345',\
+			# #allergies
+			# 'SRR1171336',\
+			# 'SRR1171337',\
+			# 'SRR1171338',\
+			# 'SRR1171339',\
+			# 'SRR1171340',\
+			# 'SRR1171341',\
+			# 'SRR1171342',\
+			# 'SRR1171343',\
+			# 'SRR1171344',\
+			# 'SRR1171345',\
 
 
-			#b_cell subsets
-			'SRR1168779',\
-			'SRR1168788',\
-			'SRR1168789',\
-			'SRR1168790',\
-			'SRR1168792',\
-			'SRR1168794',\
+			# #b_cell subsets
+			# 'SRR1168779',\
+			# 'SRR1168788',\
+			# 'SRR1168789',\
+			# 'SRR1168790',\
+			# 'SRR1168792',\
+			# 'SRR1168794',\
+
+			'TPO-113.assembled',\
+			'TPO-114.assembled',\
+			'TPO-118.assembled',\
+			'TPO-120.assembled',\
+			'TPO-137.assembled',\
+			'TPO-139.assembled',\
+			'TPO-92.assembled',\
+			'TPO-95.assembled',\
 
 
 			] #must be a list of file id's (no .fasta extension)
 
 
-num_sequences = 100000 # max number of sequences to analyze. 50 - 100k is a good depth
+num_sequences = 200000 # max number of sequences to analyze. 50 - 100k is a good depth
 ABtype = None # set if you only want to analyze a certain class of antibody (prob not)
 plots = False #if you are running on a local machine and want to see plots - set to True
 
@@ -130,10 +140,10 @@ plots = False #if you are running on a local machine and want to see plots - set
 ###########################
 
 #get files, if necessary
-fastq_dump(fileIDs)
+# fastq_dump(fileIDs)
 
 # Run VDJ-fasta - store output in s3 folder: ''
-run_vdjfasta(fileIDs, num_sequences)
+multiprocess_vdj_local.run_vdjfasta(fileIDs, num_sequences, fastq=True)
 
 # load in vdj-fasta output and pull out features using rep-seq
 ext = '.VDJ.H3.L3.CH1.fa'

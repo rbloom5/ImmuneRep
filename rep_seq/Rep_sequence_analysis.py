@@ -13,6 +13,8 @@ from multiprocessing import Pool, freeze_support
 from collections import OrderedDict
 from ete2 import Tree
 import glob
+import operator
+import time
 
 
 
@@ -45,8 +47,7 @@ except:
 # import ab_classes 
 # reload(ab_classes)
 from ab_classes import *
-
-       
+      
 
 class Rep_seq:
 
@@ -87,10 +88,10 @@ class Rep_seq:
 		self.Reads_split_by_f4V = v_first4_split(self.Reads)
 
 		self.f4V_freqs = {}
-		self.features['f4V_fractions'] = {}
+		self.features['f4VJ_fractions'] = {}
 		for germ in self.Reads_split_by_f4V:
 			self.f4V_freqs[germ] = len(self.Reads_split_by_f4V[germ])
-			self.features['f4V_fractions'][germ] = len(self.Reads_split_by_f4V[germ])/float(self.features['num_Reads'])
+			self.features['f4VJ_fractions'][germ] = len(self.Reads_split_by_f4V[germ])/float(self.features['num_Reads'])
 
 
 	def find_clones(self,parallel=False):
@@ -181,7 +182,7 @@ class Rep_seq:
 					                               IDs = IDs,\
 					                               Vmut = Vmut,\
 					                               Jmut = Jmut,\
-					                               sh = sh)
+					                               sh = sh )
 
 
 					Clones_split_by_VJ[germ][clone_num] = Clone(V=germ, \
@@ -195,7 +196,7 @@ class Rep_seq:
 					                               			IDs = IDs,\
 					                               			Vmut = Vmut,\
 					                               			Jmut = Jmut,\
-					                               			sh = sh)
+					                               			sh = sh )
 					clone_index+=1
 				
 				#print progress 
@@ -226,46 +227,50 @@ class Rep_seq:
 
 
 		#make somewhat descriptive directory and file names
-		# head, tail = os.path.split(self.filepath[0])
-		# dirstring = tail.split('.')[0]+'_vj_files'
-		# os.system("mkdir "+dirstring)
-		# file_list = []
-		# # make fasta file for all clones in each VJ pair
-		# print "writing files for tree creation"
-		# for germ in self.Clones_split_by_VJ:
-		# 	filestring = dirstring+'/immTree_'+germ+'.fasta'
-		# 	file_list.append(filestring)
-		# 	with open(filestring, 'w') as f:
-		# 		for clone in self.Clones_split_by_VJ[germ]:
-		# 			best_id = find_best_id(self.Clones_split_by_VJ[germ][clone], self.Reads_split_by_VJ[germ])
-		# 			find_and_write(best_id, f, self.filepath[0])
+		start = time.time()
+		head, tail = os.path.split(self.filepath[0])
+		dirstring = tail.split('.')[0]+'_vj_files'
+		os.system("mkdir "+dirstring)
+		os.system('mkdir /home/ubuntu/tree_output')
+		os.system('mkdir /home/ubuntu/parsed_fasta')
+
+		file_list = []
+		# make fasta file for all clones in each VJ pair
+		print "writing files for tree creation"
+		for germ in self.Clones_split_by_VJ:
+			filestring = dirstring+'/immTree_'+germ+'.fasta'
+			file_list.append(filestring)
+			with open(filestring, 'w') as f:
+				for clone in self.Clones_split_by_VJ[germ]:
+					best_id = find_best_id(self.Clones_split_by_VJ[germ][clone], self.Reads_split_by_VJ[germ])
+					find_and_write(best_id, f, self.filepath[0])
 
 
-		# # set up a parallell processing pool
-		# num_cores = multiprocessing.cpu_count()/4
-		# pool = Pool(processes=num_cores)
-		# nIter = 300 #should do 300+ for large repertoires
-		# fstrings_for_pool=[]
+		# set up a parallell processing pool
+		num_cores = multiprocessing.cpu_count()/3
+		pool = Pool(processes=num_cores)
+		nIter = 200 #should do 300+ for large repertoires
+		fstrings_for_pool=[]
 
-		# matlab_call = '/home/ubuntu/imm_tree_test/run_run_immunitree.sh \
-		# 				/usr/local/MATLAB/MATLAB_Compiler_Runtime/v83/ '
-		# 				#/home/ubuntu/SRR1383448_vj_files/immTree_IGHV1-2_IGHJ4.fasta 50'
+		matlab_call = '/home/ubuntu/imm_tree_test/run_run_immunitree.sh \
+						/usr/local/v83 '
+						#/home/ubuntu/SRR1383448_vj_files/immTree_IGHV1-2_IGHJ4.fasta 50'
 
-		# #make list of all the bash calls (one for each VJ file we input to immunitree)
-		# for f in file_list:
-		# 	fstrings_for_pool.append(matlab_call + f + ' %s'%nIter)
+		#make list of all the bash calls (one for each VJ file we input to immunitree)
+		for f in file_list:
+			fstrings_for_pool.append(matlab_call + f + ' %s'%nIter)
 
-		# #run immunitree on all cores, the .node files are stored in S3 
-		# print "Running Immunitree.  This may take a while..."
-		# try:
-		# 	results = pool.map(os.system, fstrings_for_pool)
-		# except:
-		# 	pass
+		#run immunitree on all cores, the .node files are stored in S3 
+		print "Running Immunitree.  This may take a while..."
+		try:
+			results = pool.map(os.system, fstrings_for_pool)
+		except:
+			pass
 
-		# pool.close()
-		# pool.join()
-		# #delete all the temp vj-files
-		# os.system('sudo rm -f -r %s'%dirstring)
+		pool.close()
+		pool.join()
+		#delete all the temp vj-files
+		os.system('sudo rm -f -r %s'%dirstring)
 
 		# This section creates a dict where the key is the VJ pair (seperated by _) and the object has the 
 		# ete2 tree structure. Each node in the tree structure has associated with it; a name, size, mutations from parent, and
@@ -273,13 +278,16 @@ class Rep_seq:
 		self.tree_dict = {}
 		self.pruned_tree_dict ={}
 
-		sample_name = self.filepath[0].split('/')[-1].split('.')[0]
+		for entry in glob.glob('/home/ubuntu/tree_output/*.node.txt'):
+			try:
+				VJ_name = entry.split('/')[-1].split('.')[0][8:]
+				self.tree_dict[VJ_name] = convert_immunitree_to_ete2(entry)
+				self.pruned_tree_dict[VJ_name] = convert_immunitree_to_ete2(entry)
+				for leaf in self.pruned_tree_dict[VJ_name].get_leaves(): leaf.detach()
+			except:
+				continue
+		print "%s tree process time"%dirstring, time.time()-start
 
-		for entry in glob.glob('/home/ubuntu/tree_output/'+sample_name+'/*.node.txt'):
-			VJ_name = '_'.join(entry.split('.')[0].split('_')[1:3])
-			self.tree_dict[VJ_name] = convert_immunitree_to_ete2(entry)
-			self.pruned_tree_dict[VJ_name] = convert_immunitree_to_ete2(entry)
-			for leaf in self.pruned_tree_dict[VJ_name].get_leaves(): leaf.detach()
 
 
 	def find_clusters(self):
@@ -458,8 +466,9 @@ class Rep_seq:
 
 
 
-		#######  Plot VJ frequencies  ##########
-		self.plot_VJ_fractions()
+		#######  Plot VJ fractions for 10 most common VJ pairs ##########
+		self.plot_VJ_fractions(top_ten=True)
+		
 
 
 
@@ -467,16 +476,22 @@ class Rep_seq:
 
 
 
-	def plot_VJ_freqs(self, f4=False):
-		if f4:
-			data = self.f4VJ_freqs
+	def plot_VJ_freqs(self, f4=False, top_ten=False):
+		plt.figure(num=None, figsize=(7, 5), dpi=80)
+		plt.rc('xtick', labelsize=15) 
+		plt.rc('ytick', labelsize=15)
+
+		if top_ten:
+			data = dict(sorted(self.features['VJ_freqs'].iteritems(), key=operator.itemgetter(1), reverse=True)[:10])
+		elif f4:
+			data = self.features['f4VJ_freqs']
 		else:
 			data = self.features['VJ_freqs']
 
 		plt.bar(range(len(data)), data.values(), align='center')
 		plt.xticks(range(len(data)), data.keys(), rotation=90)
-		plt.xlabel('VJ-Germlines')
-		plt.ylabel('Reads')
+		plt.xlabel('VJ-Germlines', fontsize=15)
+		plt.ylabel('Reads',fontsize=15)
 		plt.show()
 
 
@@ -484,16 +499,22 @@ class Rep_seq:
 
 
 
-	def plot_VJ_fractions(self, f4=False):
-		if f4:
-			data = self.features['f4V_fractions']
+	def plot_VJ_fractions(self, f4=False, top_ten=False):
+		plt.figure(num=None, figsize=(7, 5), dpi=80)
+		plt.rc('xtick', labelsize=15) 
+		plt.rc('ytick', labelsize=15)
+
+		if top_ten:
+			data = dict(sorted(self.features['VJ_fractions'].iteritems(), key=operator.itemgetter(1), reverse=True)[:10])
+		elif f4:
+			data = self.features['f4VJ_fractions']
 		else:
 			data = self.features['VJ_fractions']
 
 		plt.bar(range(len(data)), data.values(), align='center')
 		plt.xticks(range(len(data)), data.keys(), rotation=90)
-		plt.xlabel('VJ-Germlines')
-		plt.ylabel('Fraction of Repertoire')
+		plt.xlabel('VJ-Germlines', fontsize=15)
+		plt.ylabel('Fraction of Repertoire', fontsize=15)
 		plt.show()
 
 

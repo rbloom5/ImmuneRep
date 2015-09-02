@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import vdj_fasta
-from vdj_fasta import multiprocess_vdj
 from vdj_fasta import multiprocess_vdj_local
 
 import rep_seq
@@ -11,6 +10,7 @@ import subprocess
 import time
 import pickle
 import os
+from Bio import SeqIO
 
 
 ##################################################
@@ -41,21 +41,22 @@ def copy_to_s3(files, local_dir, s3_dir):
 	if not isinstance(files, list):
 		files = [files]
 	for f in files:
-		aws_loc = 's3://rna-seq/%s/'%s3_dir + f
+		aws_loc = 's3://%s/'%s3_dir + f
 		bash('aws s3 cp %s/'%local_dir+f+' '+aws_loc)
 
 def copy_from_s3(files,local_dir, s3_dir):
 	if not isinstance(files, list):
 		files = [files]
 	for f in files:
-		aws_loc = 's3://rna-seq/%s/'%s3_dir + f
+		aws_loc = 's3://%s/'%s3_dir + f
 		bash('aws s3 cp ' + aws_loc + ' %s/'%local_dir + f)
 
 def fastq_dump(f, clean=True):
-	os.system('fastq-dump ./%s'%f)
-	copy_to_s3(f[:-4]+'.fastq', '.', 'patient_repertoire_data')
+	os.system('./packages/sra_toolkit/bin/fastq-dump %s'%f)
+	copy_to_s3(f+'.fastq', '.', 'patient_repertoire_data')
 	if clean:
-		copy_to_s3(f[:-4]+'.fastq', '.', 'clean-repertoire-data')
+		SeqIO.convert(f+'.fastq', 'fastq', f+'.fasta', 'fasta')
+		copy_to_s3(f+'.fasta', '.', 'clean-repertoire-data')
 
 
 
@@ -103,7 +104,7 @@ fileIDs = [	#'SRR1383453',\
 			# 'SRR1171341',\
 			# 'SRR1171342',\
 			# 'SRR1171343',\
-			# 'SRR1171344',\
+			# # 'SRR1171344',\
 			# 'SRR1171345',\
 
 
@@ -115,20 +116,48 @@ fileIDs = [	#'SRR1383453',\
 			# 'SRR1168792',\
 			# 'SRR1168794',\
 
-			'TPO-113.assembled',\
-			'TPO-114.assembled',\
-			'TPO-118.assembled',\
-			'TPO-120.assembled',\
-			'TPO-137.assembled',\
-			'TPO-139.assembled',\
-			'TPO-92.assembled',\
-			'TPO-95.assembled',\
+			#more christian
+			# 'SRR1298383',\
+			# 'SRR1298730',\
+			# 'SRR1298731',\
+			# 'SRR1298732',\
+			# 'SRR1298733',\
+			# 'SRR1298734',\
+			# 'SRR1298735',\
+			# 'SRR1298736',\
+			# 'SRR1298737',\
+			# 'SRR1298738',\
+			# 'SRR1298739',\
+			# 'SRR1298741',\
+			# 'SRR1298743',\
+
+			#SLE
+			# 'SRR1959703',\
+			# 'SRR1960371',\
+			# 'SRR1961400',\
+			# 'SRR1964710',\
+			# 'SRR1964711',\
+			# 'SRR1964712',\
+			'SRR1964713',\
+			'SRR1964786',\
+			'SRR1964787',\
+			'SRR1964788',\
+			'SRR1964792',\
+			'SRR1964793',\
+			'SRR1964794',\
+			'SRR1964795',\
+			'SRR1964796',\
+			'SRR1964797',\
+			'SRR1964798',\
+			'SRR1964799',\
+			'SRR1964800',\
+			'SRR1964801',\
 
 
 			] #must be a list of file id's (no .fasta extension)
 
 
-num_sequences = 200000 # max number of sequences to analyze. 50 - 100k is a good depth
+num_sequences = 100000 # max number of sequences to analyze. 50 - 100k is a good depth
 ABtype = None # set if you only want to analyze a certain class of antibody (prob not)
 plots = False #if you are running on a local machine and want to see plots - set to True
 
@@ -139,11 +168,19 @@ plots = False #if you are running on a local machine and want to see plots - set
 ####### MAIN SCRIPT #######
 ###########################
 
-#get files, if necessary
-# fastq_dump(fileIDs)
+# #get files, if necessary
+# for ids in fileIDs:
+# 	print "downloading %s from SRA"%ids
+# 	counter=1
+# 	# os.system('wget ftp://ftp-trace.ncbi.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/%s/%s/%s.sra'%(ids[:6], ids, ids))
+# 	fastq_dump(ids)
+# 	os.system('rm -r ncbi')
+# 	os.system('rm %s.fastq'%ids)
+# 	os.system('rm %s.fasta'%ids)
 
-# Run VDJ-fasta - store output in s3 folder: ''
-multiprocess_vdj_local.run_vdjfasta(fileIDs, num_sequences, fastq=True)
+
+# # Run VDJ-fasta - store output in s3 folder: ''
+# multiprocess_vdj_local.run_vdjfasta(fileIDs, num_sequences)
 
 # load in vdj-fasta output and pull out features using rep-seq
 ext = '.VDJ.H3.L3.CH1.fa'
@@ -156,8 +193,7 @@ for f in fileIDs:
 	f_string = s3_dir + f + ext
 
 	make_dir('/home/ubuntu/tempvdj')
-	make_dir('/home/ubuntu/tree_output')
-	make_dir('/home/ubuntu/parsed_fasta')
+
 
 	#copy from s3 to local
 	bash('aws s3 cp %s /home/ubuntu/tempvdj/%s'%(f_string,f+ext))
@@ -192,21 +228,21 @@ for f in fileIDs:
 	for nf in node_files:
 		aws_loc = 's3://tree-output/'+f+'/' + nf
 		bash('aws s3 cp /home/ubuntu/tree_output/'+nf + ' '+aws_loc)
+	os.system('sudo rm -f -r /home/ubuntu/tree_output')
+	os.system('sudo rm -f -r /home/ubuntu/parsed_fasta')
 
 
 
 	#remove all temp files that have been transferred
 	os.system('sudo rm -f -r /home/ubuntu/tempvdj/*')
-	os.system('sudo rm -f -r /home/ubuntu/tree_output/*')
-	os.system('sudo rm -f -r /home/ubuntu/parsed_fasta/*')
+
 
 	counter+=1
 	print f, "complete!  %s of %s files finished\n"%(counter,len(fileIDs))
 	print "processing time:", time.time()-start
 
 os.system('sudo rm -f -r /home/ubuntu/tempvdj')
-os.system('sudo rm -f -r /home/ubuntu/tree_output')
-os.system('sudo rm -f -r /home/ubuntu/parsed_fasta')
+
 
 
 

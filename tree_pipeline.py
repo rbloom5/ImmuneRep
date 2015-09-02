@@ -30,6 +30,12 @@ def bash(cmd):
 	output = process.communicate()[0]
 	return output
 
+def make_dir(dirname):
+	if not os.path.exists('%s/'%dirname):
+		os.makedirs('%s/'%dirname)
+	else:
+		os.system('rm %s/*'%dirname)
+
 
 
 
@@ -39,11 +45,25 @@ def bash(cmd):
 
 fileIDs = [	#'SRR1383453',\
 			#'SRR1383472',\
-			#'SRR1383450',\
-			#'SRR1383455',\
+			'SRR1383450',\
+			'SRR1383455',\
 			'SRR1383466',\
-			'SRR1383470',\
+			# 'SRR1383470',\
 			'SRR1383476',\
+			'newQuakeMID_0-len-q-t',\
+			'newQuakeMID_1-len-q-t',\
+			'newQuakeMID_2-len-q-t',\
+			'newQuakeMID_6-len-q-t',\
+			'newQuakeMID_7-len-q-t',\
+			'newQuakeMID_8-len-q-t',\
+			'newQuakeMID_9-len-q-t',\
+			'newQuake_post_vax_MID_0-len-q-t',\
+			'newQuake_post_vax_MID_1-len-q-t',\
+			'newQuak_post_vax_eMID_2-len-q-t',\
+			'newQuake_post_vax_MID_6-len-q-t',\
+			'newQuake_post_vax_MID_7-len-q-t',\
+			'newQuake_post_vax_MID_8-len-q-t',\
+			'newQuake_post_vax_MID_9-len-q-t',\
 			] #must be a list of file id's (no .fasta extension)
 
 
@@ -75,6 +95,9 @@ for f in fileIDs:
 	print "started processing", f
 	f_string = s3_dir + f + ext
 	f_string1 = s3_dir1 + f + ext1
+	make_dir('/home/ubuntu/tempvdj')
+	make_dir('/home/ubuntu/tree_output')
+	make_dir('/home/ubuntu/parsed_fasta')
 
 	#copy from s3 to local
 	bash('aws s3 cp %s /home/ubuntu/tempvdj/%s'%(f_string1,f+ext1))
@@ -90,6 +113,7 @@ for f in fileIDs:
 
 	#output features and Rep-seq object to files
 
+
 	
 	node_files = [i for i in os.listdir('/home/ubuntu/tree_output') if i.endswith('.fasta.node.txt')]
 	for nf in node_files:
@@ -104,6 +128,10 @@ for f in fileIDs:
 	counter+=1
 	print f, "complete!  %s of %s files finished\n"%(counter,len(fileIDs))
 	print "processing time:", time.time()-start
+
+os.system('sudo rm -f -r /home/ubuntu/tempvdj')
+os.system('sudo rm -f -r /home/ubuntu/tree_output')
+os.system('sudo rm -f -r /home/ubuntu/parsed_fasta')
 
 
 

@@ -68,6 +68,8 @@ class Experiment:
 
 		self.clone_DF = pd.DataFrame(clone_ls, columns=Clone_columns)
 
+#Investigating clone diversity		
+
 	def clone_bars(self):
 
 		self.clone_DF.plot(x='Sample', kind='bar', figsize=(20,6));
@@ -84,6 +86,8 @@ class Experiment:
 		        data = self.groups[igroup]['sample data'][sample]['clone_distribution']
 		        plt.plot(np.array(data).cumsum(), color=colors[igroup])
 		plt.legend(handles=patches, loc=4);
+
+#Investigating Somatic Hyper Mutation	
 
 	def class_SHM(self):
 
@@ -121,44 +125,59 @@ class Experiment:
 
 		#df = self.class_fraction_DF[self.class_fraction_DF.Antibody == 'IGHM']
 
-	def pruned_vs_full(self):
+#Tree analysis
 
-		colors = sns.color_palette("hls", len(self.groups))
-		plt.figure(figsize=(20,6))
+	def tree_scatter(self, x, y, size_variable=False):
+		#Sets the color palette from Seaborn
+	    colors = sns.color_palette("hls", len(self.groups))
+	    plt.figure(figsize=(20,10))
 
-		for igroup, group in enumerate(self.groups):
-		    for sample in group['samples']:
-		        fullDF = pd.DataFrame.from_dict(self.groups[igroup]['sample data'][sample]['Full_Tree_Size'])
-		        prunedDF = pd.DataFrame.from_dict(self.groups[igroup]['sample data'][sample]['Pruned_Tree_Size'])
-		        
-		        prune = prunedDF.values.reshape(702)
-		        full = fullDF.values.reshape(702)
-		        
-		        plt.scatter(prune, full, s=10, c=colors[igroup]);
-		        
-		plt.show()
+	    columns = ['VJ', 'VJ Freq', 'Tree Size', 'Pruned Tree Size', 'VJ Fraction', 'Generations', 'Avg Mutations', 'STD Mutations']
+	    patches = []
 
-	def pruned_vs_total_reads(self):
+	    for igroup, group in enumerate(self.groups):
+	    	#assigns each group it's own color from the color pallete
+	        patches.append(mpatches.Patch(color=colors[igroup], label=group['name']))
 
-		colors = sns.color_palette("hls", len(self.groups))
-		plt.figure(figsize=(20,6))
+	        for sample in group['samples']:
 
-		for igroup, group in enumerate(self.groups):
-		    for sample in group['samples']:
-		        fullDF = pd.DataFrame.from_dict(self.groups[igroup]['sample data'][sample]['Full_Tree_Size'])
-		        #prunedDF = pd.DataFrame.from_dict(test.groups[igroup]['sample data'][sample]['Pruned_Tree_Size'])
-		        
-		        tree_size_list = []
-		        total_reads = []
-		        for key in self.groups[igroup]['sample data'][sample]['VJ_freqs']:
-		            V = key.split('_')[0]
-		            J = key.split('_')[1]
+	        	#Turns the tree dicts into DataFrames
+	            fullDF = pd.DataFrame.from_dict(self.groups[igroup]['sample data'][sample]['Full_Tree_Size'])
+	            prunedDF = pd.DataFrame.from_dict(self.groups[igroup]['sample data'][sample]['Pruned_Tree_Size'])
 
-		            tree_size_list.append(fullDF[J].loc[V])
-		            total_reads.append(test.groups[igroup]['sample data'][sample]['VJ_freqs'][key])
-		            
-		        plt.scatter(tree_size_list, total_reads, s=10, c=colors[igroup]);
-		        
-		plt.show()
-		        
-        
+	            #Iterates through every VJ pair in the VJ generations dict. VJ generations has the smallest subset of pairs becuase it is an 
+	            #output of Immunitree which cannot run on VJ pairs with only one clone. Therefore the pairs need to be filtered down. 
+	            data = []
+	            for key in self.groups[igroup]['sample data'][sample]['VJ_generations']:
+	                V = key.split('_')[0]
+	                J = key.split('_')[1]
+
+	                VJ_freq = self.groups[igroup]['sample data'][sample]['VJ_freqs'][key]
+	                VJ_frac = self.groups[igroup]['sample data'][sample]['VJ_fractions'][key]
+	                tree_size = fullDF[J].loc[V]
+	                pruned_tree_size = prunedDF[J].loc[V]
+	                generations = self.groups[igroup]['sample data'][sample]['VJ_generations'][key]
+	                avg_mutations = self.groups[igroup]['sample data'][sample]['VJ_shm_mean'][key]
+	                std_mutations = self.groups[igroup]['sample data'][sample]['VJ_shm_stdev'][key]
+	                    
+	                data.append([key, VJ_freq, tree_size, pruned_tree_size, VJ_frac*10000, generations, avg_mutations, std_mutations])
+	                    
+	            plotting_DF = pd.DataFrame(data, columns = columns).set_index('VJ')
+
+	            #Looks to see if user wants circle size to repersent something
+	            if size_variable != False : circle_size = plotting_DF[size_variable].tolist()
+	            else: circle_size = 100
+
+	            plt.scatter(plotting_DF[x].tolist(), plotting_DF[y].tolist(), s=circle_size, c=colors[igroup], alpha=0.5);
+
+	    #makes it so that 0,0 is the lower left corner
+	    plt.xlim(0)
+	    plt.ylim(0)
+	    plt.ylabel(y)
+	    plt.xlabel(x)
+
+	    #Creates a legend with patches
+	    plt.legend(handles=patches, loc=4)
+	    plt.show()
+			        
+	        

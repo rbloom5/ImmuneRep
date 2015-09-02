@@ -67,6 +67,33 @@ def update_rep_stats(reps = 'default'):
 		if "VJ_shm_mean" not in features_dict:
 			features_dict['VJ_shm_mean'], features_dict['VJ_shm_stdev'] = calculate_vj_shm(Rep.Clones_split_by_VJ)
 
+		if "avg_node_mutation_length" not in features_dict:
+			features_dict["avg_node_mutation_length"] = avg_node_mutation_length(Rep.tree_dict)
+			
+		if "VJ_generations" not in features_dict:
+			features_dict["VJ_generations"] = generations(Rep.tree_dict)
+
+		if "leafiness_matrix" not in features_dict:
+			features_dict["leafiness_matrix"] = leafiness_matrix(Rep.tree_dict)
+
+		if "leafiness_global" not in features_dict:
+			features_dict["leafiness_global"] = leafiness_global(Rep.tree_dict)
+
+		if "generations_matrix" not in features_dict:
+			features_dict["generations_matrix"] = generations_matrix(features_dict["VJ_generations"])
+
+		if "generations_global" not in features_dict:
+			features_dict["generations_global"] = generations_global(features_dict["VJ_generations"])
+
+		if "diversity_matrix" not in features_dict:
+			features_dict["diversity_matrix"] = diversity_matrix(features_dict['Full_Tree_Size'],features_dict['VJ_freqs'])
+
+		if "diversity_global" not in features_dict:
+			features_dict["diversity_global"] = diversity_global(features_dict['Full_Tree_Size'],features_dict['VJ_freqs'])
+
+		if "global_d50" not in features_dict:
+			features_dict["global_d50"] = d50(Rep.Clones ,features_dict['num_Reads'])
+
 		
 		
 

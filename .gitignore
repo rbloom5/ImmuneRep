@@ -9,6 +9,7 @@
 *.csv
 0
 ./ipynb_checkpoints
+./data
 
 *.json
 

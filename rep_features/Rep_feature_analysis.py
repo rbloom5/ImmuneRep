@@ -16,7 +16,7 @@ def update_rep_stats(reps = 'default'):
 
 		#dont share the strings below with anyone!
 		print "connecting to S3"
-		conn = S3Connection('AKIAJ2TEUHQV2LHU7XQQ','VKzoYINBlvZi5uiAIeAnJG5fgLedQPFrmMCpSfBp')
+		conn = S3Connection('AKIAJXWAO5OBCY2FTFNA','v3SlPCGloWqd/PbQmSGE6hNNKouI1N/jOWyALjKe')
 		json_buck = conn.get_bucket('rep-seq-jsons')
 		json_buck_list = conn.get_bucket('rep-seq-jsons').list()
 		obj_buck_list = conn.get_bucket('rep-seq-objects').list()
@@ -24,7 +24,7 @@ def update_rep_stats(reps = 'default'):
 	else:
 		#dont share the strings below with anyone!
 		print "connecting to S3"
-		conn = S3Connection('AKIAJ2TEUHQV2LHU7XQQ','VKzoYINBlvZi5uiAIeAnJG5fgLedQPFrmMCpSfBp')
+		conn = S3Connection('AKIAJXWAO5OBCY2FTFNA','v3SlPCGloWqd/PbQmSGE6hNNKouI1N/jOWyALjKe')
 		json_buck = conn.get_bucket('rep-seq-jsons')
 		json_buck_list = [key for key in conn.get_bucket('rep-seq-jsons').list() if str(key.name)[:-5] in reps] 
 		obj_buck_list = [key for key in conn.get_bucket('rep-seq-objects').list() if str(key.name)[:-4] in reps]
@@ -119,5 +119,19 @@ def update_rep_stats(reps = 'default'):
 		index+=1
 		print "finished updating %s \n"%rep[:-4]
 	conn.close()
+
+
+# cur_rep = [	'HealthyCtrl788-Z392-p220.assembled',\
+# 			'HealthyCtrl790-Z393-p220.assembled',\
+# 			'HealthyCtrl1723-Z396-p220.assembled',\
+# 			'HealthyCtrl1728-Z397-p220.assembled',\
+# 			]
+
+			
+# update_rep_stats(reps = cur_rep)
+
+
+
+
 
 

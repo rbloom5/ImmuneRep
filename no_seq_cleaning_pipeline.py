@@ -115,15 +115,19 @@ fileIDs = [	#'SRR1383453',\
 			# 'SRR1168792',\
 			# 'SRR1168794',\
 
-			'TPO-113.assembled',\
-			'TPO-114.assembled',\
-			'TPO-118.assembled',\
-			'TPO-120.assembled',\
-			'TPO-137.assembled',\
-			'TPO-139.assembled',\
-			'TPO-92.assembled',\
-			'TPO-95.assembled',\
+			# 'TPO-113.assembled',\
+			# 'TPO-114.assembled',\
+			# 'TPO-118.assembled',\
+			# 'TPO-120.assembled',\
+			# 'TPO-137.assembled',\
+			# 'TPO-139.assembled',\
+			# 'TPO-92.assembled',\
+			# 'TPO-95.assembled',\
 
+			'HealthyCtrl788-Z392-p220.assembled',\
+			'HealthyCtrl790-Z393-p220.assembled',\
+			'HealthyCtrl1723-Z396-p220.assembled',\
+			'HealthyCtrl1728-Z397-p220.assembled',\
 
 			] #must be a list of file id's (no .fasta extension)
 
